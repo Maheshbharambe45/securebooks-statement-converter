@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: secure-books-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
+      - OUTLOOK_SENDER=${OUTLOOK_SENDER:-info@securebooks.co.uk}
+      - OUTLOOK_RECIPIENT=${OUTLOOK_RECIPIENT:-info@securebooks.co.uk}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-25}
+      - MAX_TOTAL_UPLOAD_MB=${MAX_TOTAL_UPLOAD_MB:-100}
+      - TEMP_FILE_RETENTION_MINUTES=${TEMP_FILE_RETENTION_MINUTES:-30}
+      - MALWARE_SCAN_ENABLED=${MALWARE_SCAN_ENABLED:-true}
+    tmpfs:
+      - /tmp/secure-books-uploads:rw,noexec,nosuid,size=512m
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: secure-books-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
