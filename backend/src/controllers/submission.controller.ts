@@ -40,6 +40,33 @@ export function getSingleFormConfig(req: Request, res: Response) {
   });
 }
 
+export function normalizeMulterFiles(reqFiles: unknown): Express.Multer.File[] {
+  if (!reqFiles) {
+    return [];
+  }
+
+  // If Multer returned an array (e.g. from upload.any() or upload.array())
+  if (Array.isArray(reqFiles)) {
+    return reqFiles as Express.Multer.File[];
+  }
+
+  // If Multer returned an object dictionary (e.g. from upload.fields())
+  if (typeof reqFiles === 'object') {
+    const filesList: Express.Multer.File[] = [];
+    for (const fieldKey of Object.keys(reqFiles)) {
+      const fieldVal = (reqFiles as Record<string, unknown>)[fieldKey];
+      if (Array.isArray(fieldVal)) {
+        filesList.push(...(fieldVal as Express.Multer.File[]));
+      } else if (fieldVal && typeof fieldVal === 'object') {
+        filesList.push(fieldVal as Express.Multer.File);
+      }
+    }
+    return filesList;
+  }
+
+  return [];
+}
+
 export async function handleDocumentSubmission(req: Request, res: Response, next: NextFunction) {
   const formId = req.params.formId || 'bookkeeping-documents';
   const formConfig = getFormConfig(formId);
@@ -93,8 +120,8 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       }
     }
 
-    // 3. Process Uploaded Files from Multer
-    const multerFiles = (req.files as Express.Multer.File[]) || [];
+    // 3. Process Uploaded Files from Multer (Normalize array or object dictionary)
+    const multerFiles = normalizeMulterFiles(req.files);
     const filesToValidate: Array<{ category: string; originalName: string; tempPath: string; sizeBytes: number }> = [];
 
     for (const file of multerFiles) {

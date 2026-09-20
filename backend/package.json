@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "test": "npx tsx --test src/tests/validation.test.ts src/tests/formsRegistry.test.ts src/tests/sesService.test.ts"
+    "test": "npx tsx --test src/tests/validation.test.ts src/tests/formsRegistry.test.ts src/tests/sesService.test.ts src/tests/submissionController.test.ts"
   },
   "keywords": [
     "secure-books",

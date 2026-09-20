@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFormsList = getFormsList;
 exports.getSingleFormConfig = getSingleFormConfig;
+exports.normalizeMulterFiles = normalizeMulterFiles;
 exports.handleDocumentSubmission = handleDocumentSubmission;
 const referenceGenerator_js_1 = require("../utils/referenceGenerator.js");
 const validator_js_1 = require("../services/fileValidation/validator.js");
@@ -35,6 +36,30 @@ function getSingleFormConfig(req, res) {
         fields: form.fields,
         documentCategories: form.documentCategories,
     });
+}
+function normalizeMulterFiles(reqFiles) {
+    if (!reqFiles) {
+        return [];
+    }
+    // If Multer returned an array (e.g. from upload.any() or upload.array())
+    if (Array.isArray(reqFiles)) {
+        return reqFiles;
+    }
+    // If Multer returned an object dictionary (e.g. from upload.fields())
+    if (typeof reqFiles === 'object') {
+        const filesList = [];
+        for (const fieldKey of Object.keys(reqFiles)) {
+            const fieldVal = reqFiles[fieldKey];
+            if (Array.isArray(fieldVal)) {
+                filesList.push(...fieldVal);
+            }
+            else if (fieldVal && typeof fieldVal === 'object') {
+                filesList.push(fieldVal);
+            }
+        }
+        return filesList;
+    }
+    return [];
 }
 async function handleDocumentSubmission(req, res, next) {
     const formId = req.params.formId || 'bookkeeping-documents';
@@ -81,8 +106,8 @@ async function handleDocumentSubmission(req, res, next) {
                 return res.status(400).json({ success: false, error: 'Invalid categoryStatuses JSON payload.' });
             }
         }
-        // 3. Process Uploaded Files from Multer
-        const multerFiles = req.files || [];
+        // 3. Process Uploaded Files from Multer (Normalize array or object dictionary)
+        const multerFiles = normalizeMulterFiles(req.files);
         const filesToValidate = [];
         for (const file of multerFiles) {
             const categoryKey = file.fieldname.replace(/^files_/, '');
