@@ -117,6 +117,68 @@ describe('Submission Controller Multer Normalization & Submission Tests', () => 
     }
   });
 
+  test('handleDocumentSubmission rejects submission above 70 MB total upload limit and cleans temp directory', async () => {
+    process.env.MOCK_SES = 'true';
+    const subId = `test-sub-oversize-${Date.now()}`;
+    const tempDir = ensureSubmissionTempDir(subId);
+
+    const pdfPath = path.join(tempDir, 'large_temp.pdf');
+    fs.writeFileSync(pdfPath, Buffer.from('%PDF-1.4 Mock Large PDF'));
+
+    const mockReq: any = {
+      params: { formId: 'bookkeeping-documents' },
+      body: {
+        submissionId: subId,
+        clientName: 'Over 70MB Ltd',
+        startDate: '01/04/2026',
+        endDate: '30/04/2026',
+        selectionType: 'Month',
+        selectedPeriod: 'April 2026',
+        categoryStatuses: JSON.stringify({
+          bank_statements: { status: 'has_documents' },
+        }),
+      },
+      files: {
+        files_bank_statements: [
+          {
+            fieldname: 'files_bank_statements',
+            originalname: 'large_statement.pdf',
+            path: pdfPath,
+            size: 75 * 1024 * 1024, // 75 MB (exceeds 70 MB total upload limit)
+          },
+        ],
+      },
+      ip: '127.0.0.1',
+    };
+
+    let statusCode = 0;
+    let jsonResult: any = null;
+
+    const mockRes: any = {
+      status: (code: number) => {
+        statusCode = code;
+        return mockRes;
+      },
+      json: (data: any) => {
+        jsonResult = data;
+        return mockRes;
+      },
+    };
+
+    try {
+      await handleDocumentSubmission(mockReq, mockRes, () => {});
+
+      assert.strictEqual(statusCode, 400);
+      assert.strictEqual(jsonResult.success, false);
+      assert.match(jsonResult.error, /exceed the maximum submission size of 70 MB/i);
+
+      // Verify temporary directory cleanup after rejection
+      assert.strictEqual(fs.existsSync(tempDir), false);
+    } finally {
+      cleanupSubmissionTempDir(subId);
+    }
+  });
+
   test('handleDocumentSubmission processes submission with no uploaded files when all categories are N/A', async () => {
     process.env.MOCK_SES = 'true';
     const subId = `test-sub-nofiles-${Date.now()}`;

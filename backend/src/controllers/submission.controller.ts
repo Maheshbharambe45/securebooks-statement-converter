@@ -2,12 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { generateSubmissionReference } from '../utils/referenceGenerator.js';
 import { validateUploadedFiles } from '../services/fileValidation/validator.js';
 import { scanFileForMalware } from '../services/malwareScan/securityScanner.js';
-import { cleanupSubmissionTempDir } from '../services/cleanup/tempCleanup.js';
+import { cleanupSubmissionTempDir, ensureSubmissionTempDir, getSubmissionTempDir } from '../services/cleanup/tempCleanup.js';
 import { SesService, DynamicSubmissionPayload } from '../services/ses/sesService.js';
+import { ZipService } from '../services/zip/zipService.js';
 import { getFormConfig, getAllForms } from '../forms/formRegistry.js';
 import { Logger } from '../utils/logger.js';
 
 const sesService = new SesService();
+const zipService = new ZipService();
 
 export function getFormsList(req: Request, res: Response) {
   const forms = getAllForms();
@@ -136,7 +138,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
 
     // 4. Server-Side File Validation (Magic Bytes, Extensions, Size Limits)
     const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB || '25', 10);
-    const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '25', 10);
+    const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '70', 10);
 
     const validationResult = validateUploadedFiles(filesToValidate, {
       maxFileSizeMb,
@@ -147,7 +149,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       Logger.warn(`[${reference}] Document validation failed`, { errors: validationResult.errors });
       return res.status(400).json({
         success: false,
-        error: 'File validation failed. Please check supported file formats (PDF, JPG, PNG, WEBP, XLS, XLSX, CSV, ZIP) and size limits.',
+        error: 'Your total documents exceed the maximum submission size of 70 MB. Please remove some files or submit them separately.',
         details: validationResult.errors,
       });
     }
@@ -164,7 +166,21 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       }
     }
 
-    // 6. Build Submission Payload & Send via AWS SES API Service
+    // 6. Package Submission into Temporary ZIP Archive(s)
+    const tempDir = ensureSubmissionTempDir(submissionId);
+    const zipPackage = await zipService.buildSubmissionZipPackages({
+      submissionId,
+      reference,
+      formConfig,
+      fieldValues,
+      clientEmail,
+      categoryStatuses,
+      additionalNotes,
+      files: validationResult.validatedFiles,
+      tempDir,
+    });
+
+    // 7. Build Submission Payload & Send via AWS SES API Service
     const payload: DynamicSubmissionPayload = {
       formConfig,
       reference,
@@ -175,7 +191,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       files: validationResult.validatedFiles,
     };
 
-    const sesResult = await sesService.sendSubmissionEmail(payload);
+    const sesResult = await sesService.sendZipPackagesEmail(payload, zipPackage);
 
     if (!sesResult.success) {
       Logger.error(`[${reference}] AWS SES submission email delivery failed`, { error: sesResult.error });
@@ -189,6 +205,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       formId,
       reference,
       filesCount: validationResult.validatedFiles.length,
+      zipPartsCount: zipPackage.parts.length,
       mode: sesResult.mode,
     });
 
@@ -206,7 +223,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       error: "We couldn't submit your documents right now. Please try again.",
     });
   } finally {
-    // 7. Clean temporary files
+    // 8. Hard-delete all temporary uploaded files and ZIP archives
     cleanupSubmissionTempDir(submissionId);
   }
 }

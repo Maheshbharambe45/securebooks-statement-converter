@@ -105,6 +105,61 @@ const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
             (0, tempCleanup_js_1.cleanupSubmissionTempDir)(subId);
         }
     });
+    (0, node_test_1.test)('handleDocumentSubmission rejects submission above 70 MB total upload limit and cleans temp directory', async () => {
+        process.env.MOCK_SES = 'true';
+        const subId = `test-sub-oversize-${Date.now()}`;
+        const tempDir = (0, tempCleanup_js_1.ensureSubmissionTempDir)(subId);
+        const pdfPath = path_1.default.join(tempDir, 'large_temp.pdf');
+        fs_1.default.writeFileSync(pdfPath, Buffer.from('%PDF-1.4 Mock Large PDF'));
+        const mockReq = {
+            params: { formId: 'bookkeeping-documents' },
+            body: {
+                submissionId: subId,
+                clientName: 'Over 70MB Ltd',
+                startDate: '01/04/2026',
+                endDate: '30/04/2026',
+                selectionType: 'Month',
+                selectedPeriod: 'April 2026',
+                categoryStatuses: JSON.stringify({
+                    bank_statements: { status: 'has_documents' },
+                }),
+            },
+            files: {
+                files_bank_statements: [
+                    {
+                        fieldname: 'files_bank_statements',
+                        originalname: 'large_statement.pdf',
+                        path: pdfPath,
+                        size: 75 * 1024 * 1024, // 75 MB (exceeds 70 MB total upload limit)
+                    },
+                ],
+            },
+            ip: '127.0.0.1',
+        };
+        let statusCode = 0;
+        let jsonResult = null;
+        const mockRes = {
+            status: (code) => {
+                statusCode = code;
+                return mockRes;
+            },
+            json: (data) => {
+                jsonResult = data;
+                return mockRes;
+            },
+        };
+        try {
+            await (0, submission_controller_js_1.handleDocumentSubmission)(mockReq, mockRes, () => { });
+            node_assert_1.default.strictEqual(statusCode, 400);
+            node_assert_1.default.strictEqual(jsonResult.success, false);
+            node_assert_1.default.match(jsonResult.error, /exceed the maximum submission size of 70 MB/i);
+            // Verify temporary directory cleanup after rejection
+            node_assert_1.default.strictEqual(fs_1.default.existsSync(tempDir), false);
+        }
+        finally {
+            (0, tempCleanup_js_1.cleanupSubmissionTempDir)(subId);
+        }
+    });
     (0, node_test_1.test)('handleDocumentSubmission processes submission with no uploaded files when all categories are N/A', async () => {
         process.env.MOCK_SES = 'true';
         const subId = `test-sub-nofiles-${Date.now()}`;

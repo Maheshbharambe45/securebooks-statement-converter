@@ -3,6 +3,7 @@ import fs from 'fs';
 import { FileMetadata } from '../fileValidation/validator.js';
 import { FormConfig } from '../../forms/types.js';
 import { resolveFormRecipient, renderSubjectTemplate } from '../../forms/formRegistry.js';
+import { ZipPackageResult, ZipPart } from '../zip/zipService.js';
 import { Logger } from '../../utils/logger.js';
 
 export interface DynamicSubmissionPayload {
@@ -27,6 +28,9 @@ export interface SesSendResult {
   mode: 'ses' | 'mock_ses';
   error?: string;
 }
+
+// AWS SES Hard Raw Email Limit: 10 MiB (10,485,760 bytes)
+const SES_MAX_RAW_EMAIL_BYTES = 10485760;
 
 export class SesService {
   private sesClient: SESClient | null = null;
@@ -53,7 +57,10 @@ export class SesService {
     }
   }
 
-  public generateHtmlEmailBody(payload: DynamicSubmissionPayload): string {
+  public generatePartHtmlEmailBody(
+    payload: DynamicSubmissionPayload,
+    part: ZipPart
+  ): string {
     const timestamp = new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'long',
@@ -61,6 +68,13 @@ export class SesService {
       hour: '2-digit',
       minute: '2-digit',
     });
+
+    const multiPartBanner = part.totalParts > 1
+      ? `<div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:12px 16px; margin-bottom:16px;">
+           <strong style="color:#1E40AF; font-size:14px;">Package Part ${part.partIndex} of ${part.totalParts}</strong>
+           <p style="margin:4px 0 0 0; color:#1E3A8A; font-size:13px;">This submission has been split into ${part.totalParts} ZIP package parts to ensure reliable email delivery.</p>
+         </div>`
+      : '';
 
     let fieldsHtml = `<p style="margin:4px 0; color:#475569;"><strong>Form:</strong> ${escapeHtml(payload.formConfig.title)}</p>`;
     for (const field of payload.formConfig.fields) {
@@ -72,50 +86,9 @@ export class SesService {
       fieldsHtml += `<p style="margin:4px 0; color:#475569;"><strong>Client Email:</strong> ${escapeHtml(payload.clientEmail)}</p>`;
     }
 
-    fieldsHtml += `<p style="margin:4px 0; color:#475569;"><strong>Total Attached Files:</strong> ${payload.files.length}</p>`;
+    fieldsHtml += `<p style="margin:4px 0; color:#475569;"><strong>Total Submission Files:</strong> ${payload.files.length}</p>`;
+    fieldsHtml += `<p style="margin:4px 0; color:#475569;"><strong>Files in this ZIP Attachment:</strong> ${part.fileCount}</p>`;
     fieldsHtml += `<p style="margin:4px 0; color:#475569;"><strong>Submitted Date:</strong> ${timestamp}</p>`;
-
-    let categoryRowsHtml = '';
-    for (const category of payload.formConfig.documentCategories) {
-      const catState = payload.categoryStatuses[category.id] || { status: 'na' };
-      const catFiles = payload.files.filter((f) => f.category === category.id);
-
-      let statusBadge = '';
-      let fileListHtml = '';
-
-      if (catState.status === 'na') {
-        statusBadge = `<span style="display:inline-block; padding:3px 8px; border-radius:4px; background:#F1F5F9; color:#64748B; font-weight:600; font-size:13px;">Status: N/A (Documents not available)</span>`;
-      } else {
-        statusBadge = `<span style="display:inline-block; padding:3px 8px; border-radius:4px; background:#DCFCE7; color:#15803D; font-weight:600; font-size:13px;">Status: AVAILABLE (${catFiles.length} file${catFiles.length === 1 ? '' : 's'})</span>`;
-        if (catFiles.length > 0) {
-          const namesHtml = catFiles.map((f) => `<li style="margin:2px 0;">📄 ${escapeHtml(f.originalName)} (${(f.sizeBytes / (1024 * 1024)).toFixed(2)} MB)</li>`).join('');
-          fileListHtml = `<ul style="margin:6px 0 0 0; padding-left:18px; font-size:12px; color:#334155;">${namesHtml}</ul>`;
-        }
-      }
-
-      let notesHtml = '';
-      if (catState.notes && catState.notes.trim()) {
-        notesHtml = `<div style="margin-top:4px; font-size:12px; color:#475569; font-style:italic;"><strong>Notes:</strong> ${escapeHtml(catState.notes.trim())}</div>`;
-      }
-
-      categoryRowsHtml += `
-        <tr style="border-bottom: 1px solid #E2E8F0;">
-          <td style="padding: 12px 16px; font-weight: 600; color: #0F172A; vertical-align: top;">${escapeHtml(category.name)}</td>
-          <td style="padding: 12px 16px; vertical-align: top;">
-            ${statusBadge}
-            ${fileListHtml}
-            ${notesHtml}
-          </td>
-        </tr>
-      `;
-    }
-
-    const additionalNotesHtml = payload.additionalNotes && payload.additionalNotes.trim()
-      ? `<div style="margin-top:20px; padding:16px; background:#F8FAFC; border-left:4px solid #006B38; border-radius:4px;">
-           <strong style="color:#0B1F46;">Additional Notes for Secure Books:</strong>
-           <p style="margin:8px 0 0 0; color:#334155; font-size:14px; white-space:pre-wrap;">${escapeHtml(payload.additionalNotes.trim())}</p>
-         </div>`
-      : '';
 
     return `
       <!DOCTYPE html>
@@ -131,7 +104,6 @@ export class SesService {
           .content { padding: 24px; }
           .meta-box { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
           .meta-box h2 { color: #166534; margin: 0 0 12px 0; font-size: 16px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
           .footer { background: #F1F5F9; padding: 16px 24px; font-size: 12px; color: #64748B; text-align: center; border-top: 1px solid #E2E8F0; }
         </style>
       </head>
@@ -142,25 +114,16 @@ export class SesService {
             <p>${escapeHtml(payload.formConfig.title)}</p>
           </div>
           <div class="content">
+            ${multiPartBanner}
             <div class="meta-box">
               <h2>Submission Reference: ${payload.reference}</h2>
               ${fieldsHtml}
             </div>
 
-            <h3 style="color:#0B1F46; border-bottom:2px solid #006B38; padding-bottom:8px; margin-top:24px;">Document Category Summary</h3>
-            <table>
-              <thead>
-                <tr style="background:#F8FAFC; text-align:left; border-bottom:2px solid #CBD5E1;">
-                  <th style="padding:10px 16px; color:#475569; font-size:13px;">Category</th>
-                  <th style="padding:10px 16px; color:#475569; font-size:13px;">Status & Documents</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${categoryRowsHtml}
-              </tbody>
-            </table>
-
-            ${additionalNotesHtml}
+            <p style="color:#334155; font-size:14px; line-height:1.5;">
+              All documents for this submission have been packaged into the attached ZIP archive 
+              (<code>${escapeHtml(part.zipFilename)}</code>).
+            </p>
           </div>
           <div class="footer">
             <p style="margin:0;">This submission was received securely through <a href="https://forms.securebooks.co.uk" style="color:#006B38; text-decoration:none; font-weight:600;">https://forms.securebooks.co.uk</a></p>
@@ -171,12 +134,13 @@ export class SesService {
     `;
   }
 
-  public buildRawMimeMessage(
+  public buildZipRawMimeMessage(
     from: string,
     to: string,
     subject: string,
     htmlBody: string,
-    files: FileMetadata[]
+    zipPath: string,
+    zipFilename: string
   ): Buffer {
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
     const encodedSubject = /^[\x00-\x7F]*$/.test(subject)
@@ -202,24 +166,22 @@ export class SesService {
       '',
     ].join('\r\n');
 
-    for (const file of files) {
-      if (fs.existsSync(file.tempFilePath)) {
-        const fileBuffer = fs.readFileSync(file.tempFilePath);
-        const base64Data = fileBuffer.toString('base64').replace(/(.{76})/g, '$1\r\n');
-        const sanitizeFilename = file.originalName.replace(/["\r\n]/g, '_');
+    if (fs.existsSync(zipPath)) {
+      const zipBuffer = fs.readFileSync(zipPath);
+      const base64Data = zipBuffer.toString('base64').replace(/(.{76})/g, '$1\r\n');
+      const sanitizeFilename = zipFilename.replace(/["\r\n]/g, '_');
 
-        const attachmentPart = [
-          `--${boundary}`,
-          `Content-Type: ${file.mimeType || 'application/octet-stream'}; name="${sanitizeFilename}"`,
-          `Content-Transfer-Encoding: base64`,
-          `Content-Disposition: attachment; filename="${sanitizeFilename}"`,
-          '',
-          base64Data,
-          '',
-        ].join('\r\n');
+      const attachmentPart = [
+        `--${boundary}`,
+        `Content-Type: application/zip; name="${sanitizeFilename}"`,
+        `Content-Transfer-Encoding: base64`,
+        `Content-Disposition: attachment; filename="${sanitizeFilename}"`,
+        '',
+        base64Data,
+        '',
+      ].join('\r\n');
 
-        bodyParts += attachmentPart;
-      }
+      bodyParts += attachmentPart;
     }
 
     bodyParts += `--${boundary}--\r\n`;
@@ -227,74 +189,103 @@ export class SesService {
     return Buffer.from(headers + bodyParts, 'utf-8');
   }
 
-  public async sendSubmissionEmail(payload: DynamicSubmissionPayload): Promise<SesSendResult> {
+  public async sendZipPackagesEmail(
+    payload: DynamicSubmissionPayload,
+    zipPackage: ZipPackageResult
+  ): Promise<SesSendResult> {
     const recipient = this.mailTo || resolveFormRecipient(payload.formConfig);
-    const subjectData = {
+    const totalOriginalBytes = payload.files.reduce((sum, f) => sum + f.sizeBytes, 0);
+
+    Logger.info(`Initiating SES email delivery for ZIP package(s)`, {
       reference: payload.reference,
-      ...payload.fieldValues,
-    };
-    const subject = renderSubjectTemplate(payload.formConfig, subjectData);
-    const htmlBody = this.generateHtmlEmailBody(payload);
+      totalFiles: payload.files.length,
+      totalOriginalSizeMb: (totalOriginalBytes / (1024 * 1024)).toFixed(2),
+      isMultiPart: zipPackage.isMultiPart,
+      totalParts: zipPackage.parts.length,
+    });
 
-    if (this.isMockMode || !this.sesClient) {
-      Logger.info(`[MOCK AWS SES MODE] Simulating SES Raw Email delivery`, {
-        formId: payload.formConfig.id,
-        reference: payload.reference,
-        recipient,
-        from: this.mailFrom,
-        subject,
-        fileCount: payload.files.length,
-        totalSizeMb: (payload.files.reduce((sum, f) => sum + f.sizeBytes, 0) / (1024 * 1024)).toFixed(2),
-      });
+    const messageIds: string[] = [];
 
-      await new Promise((res) => setTimeout(res, 200));
+    for (const part of zipPackage.parts) {
+      const partSuffix = part.totalParts > 1 ? ` - Part ${part.partIndex} of ${part.totalParts}` : '';
+      const subject = `Secure Books - Document Submission ${payload.reference}${partSuffix}`;
+      const htmlBody = this.generatePartHtmlEmailBody(payload, part);
 
-      return {
-        success: true,
-        messageId: `mock-ses-msg-${Date.now()}`,
-        mode: 'mock_ses',
-      };
-    }
-
-    try {
-      const rawMimeBuffer = this.buildRawMimeMessage(
+      const rawMimeBuffer = this.buildZipRawMimeMessage(
         this.mailFrom,
         recipient,
         subject,
         htmlBody,
-        payload.files
+        part.zipPath,
+        part.zipFilename
       );
 
-      const command = new SendRawEmailCommand({
-        RawMessage: {
-          Data: rawMimeBuffer,
-        },
-      });
+      // Verify MIME raw size before invoking SES
+      if (rawMimeBuffer.length > SES_MAX_RAW_EMAIL_BYTES) {
+        const errorMsg = `MIME raw email size (${(rawMimeBuffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds AWS SES 10 MB limit for part ${part.partIndex} of ${part.totalParts}.`;
+        Logger.error(`[${payload.reference}] SES size limit check failed`, { error: errorMsg });
+        return {
+          success: false,
+          error: errorMsg,
+          mode: this.isMockMode ? 'mock_ses' : 'ses',
+        };
+      }
 
-      const response = await this.sesClient.send(command);
-      Logger.info(`AWS SES email successfully sent via SendRawEmailCommand`, {
-        reference: payload.reference,
-        messageId: response.MessageId,
-        recipient,
-      });
+      if (this.isMockMode || !this.sesClient) {
+        Logger.info(`[MOCK AWS SES MODE] Simulating SES ZIP email delivery`, {
+          reference: payload.reference,
+          partIndex: part.partIndex,
+          totalParts: part.totalParts,
+          zipFilename: part.zipFilename,
+          zipSizeBytes: part.sizeBytes,
+          mimeSizeBytes: rawMimeBuffer.length,
+          recipient,
+        });
 
-      return {
-        success: true,
-        messageId: response.MessageId,
-        mode: 'ses',
-      };
-    } catch (err: any) {
-      Logger.error(`AWS SES email delivery failed`, {
-        reference: payload.reference,
-        error: err.message,
-      });
+        await new Promise((res) => setTimeout(res, 150));
+        messageIds.push(`mock-ses-msg-${part.partIndex}-${Date.now()}`);
+      } else {
+        try {
+          const command = new SendRawEmailCommand({
+            RawMessage: {
+              Data: rawMimeBuffer,
+            },
+          });
 
-      return {
-        success: false,
-        error: err.message,
-        mode: 'ses',
-      };
+          const response = await this.sesClient.send(command);
+          Logger.info(`AWS SES ZIP email successfully sent via SendRawEmailCommand`, {
+            reference: payload.reference,
+            partIndex: part.partIndex,
+            totalParts: part.totalParts,
+            messageId: response.MessageId,
+            zipSizeBytes: part.sizeBytes,
+            mimeSizeBytes: rawMimeBuffer.length,
+            recipient,
+          });
+
+          if (response.MessageId) {
+            messageIds.push(response.MessageId);
+          }
+        } catch (err: any) {
+          Logger.error(`AWS SES ZIP email delivery failed for part ${part.partIndex} of ${part.totalParts}`, {
+            reference: payload.reference,
+            error: err.message,
+          });
+
+          return {
+            success: false,
+            error: err.message,
+            mode: 'ses',
+          };
+        }
+      }
     }
+
+    return {
+      success: true,
+      messageId: messageIds.join(','),
+      mode: this.isMockMode ? 'mock_ses' : 'ses',
+    };
   }
 }
 

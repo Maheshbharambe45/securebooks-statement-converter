@@ -21,7 +21,6 @@ const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
     });
     (0, node_test_1.test)('Magic bytes validation accepts valid PDF header', () => {
         const tempFilePath = path_1.default.join(os_1.default.tmpdir(), `test-pdf-${Date.now()}.pdf`);
-        // Create a mock PDF file buffer starting with %PDF-1.7
         const pdfBuffer = Buffer.from('%PDF-1.7\n%Fake PDF content for testing\n');
         fs_1.default.writeFileSync(tempFilePath, pdfBuffer);
         try {
@@ -36,7 +35,6 @@ const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
     });
     (0, node_test_1.test)('Magic bytes validation rejects fake PDF containing executable binary magic bytes', () => {
         const tempFilePath = path_1.default.join(os_1.default.tmpdir(), `test-fake-exe-${Date.now()}.pdf`);
-        // Create a mock buffer with Windows MZ executable magic bytes
         const exeBuffer = Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00]);
         fs_1.default.writeFileSync(tempFilePath, exeBuffer);
         try {
@@ -49,23 +47,41 @@ const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
                 fs_1.default.unlinkSync(tempFilePath);
         }
     });
-    (0, node_test_1.test)('File validator rejects files exceeding configured max size limit', () => {
-        const tempFilePath = path_1.default.join(os_1.default.tmpdir(), `test-large-${Date.now()}.pdf`);
-        const pdfBuffer = Buffer.from('%PDF-1.4 header');
-        fs_1.default.writeFileSync(tempFilePath, pdfBuffer);
+    (0, node_test_1.test)('File validator accepts total submission upload up to 70 MB limit', () => {
+        const tempFilePath = path_1.default.join(os_1.default.tmpdir(), `test-valid-70mb-${Date.now()}.pdf`);
+        fs_1.default.writeFileSync(tempFilePath, Buffer.from('%PDF-1.4 header'));
         try {
             const filesToValidate = [
                 {
                     category: 'bank_statements',
-                    originalName: 'large_statement.pdf',
+                    originalName: 'valid_statement.pdf',
                     tempPath: tempFilePath,
-                    sizeBytes: 30 * 1024 * 1024, // 30 MB (exceeds 25 MB max)
+                    sizeBytes: 20 * 1024 * 1024, // 20 MB (below 70 MB limit)
                 },
             ];
-            const result = (0, validator_js_1.validateUploadedFiles)(filesToValidate, { maxFileSizeMb: 25, maxTotalUploadMb: 25 });
+            const result = (0, validator_js_1.validateUploadedFiles)(filesToValidate, { maxFileSizeMb: 25, maxTotalUploadMb: 70 });
+            node_assert_1.default.strictEqual(result.isValid, true);
+            node_assert_1.default.strictEqual(result.errors.length, 0);
+        }
+        finally {
+            if (fs_1.default.existsSync(tempFilePath))
+                fs_1.default.unlinkSync(tempFilePath);
+        }
+    });
+    (0, node_test_1.test)('File validator rejects total submission upload above 70 MB limit', () => {
+        const tempFilePath = path_1.default.join(os_1.default.tmpdir(), `test-over-70mb-${Date.now()}.pdf`);
+        fs_1.default.writeFileSync(tempFilePath, Buffer.from('%PDF-1.4 header'));
+        try {
+            const filesToValidate = [
+                { category: 'bank_statements', originalName: 'file1.pdf', tempPath: tempFilePath, sizeBytes: 20 * 1024 * 1024 },
+                { category: 'bank_statements', originalName: 'file2.pdf', tempPath: tempFilePath, sizeBytes: 20 * 1024 * 1024 },
+                { category: 'bank_statements', originalName: 'file3.pdf', tempPath: tempFilePath, sizeBytes: 20 * 1024 * 1024 },
+                { category: 'bank_statements', originalName: 'file4.pdf', tempPath: tempFilePath, sizeBytes: 20 * 1024 * 1024 },
+            ]; // Total: 80 MB (above 70 MB limit, each 20 MB <= 25 MB max per file)
+            const result = (0, validator_js_1.validateUploadedFiles)(filesToValidate, { maxFileSizeMb: 25, maxTotalUploadMb: 70 });
             node_assert_1.default.strictEqual(result.isValid, false);
             node_assert_1.default.ok(result.errors.length >= 1);
-            node_assert_1.default.match(result.errors[0], /exceeds/i);
+            node_assert_1.default.match(result.errors.join(' '), /exceed the maximum submission size of 70 MB/i);
         }
         finally {
             if (fs_1.default.existsSync(tempFilePath))

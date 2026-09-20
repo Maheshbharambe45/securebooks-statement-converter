@@ -72,7 +72,7 @@ export function validateUploadedFiles(
 
   // 4. Total size check
   if (totalSize > maxTotalBytes) {
-    errors.push(`Total upload size (${(totalSize / (1024 * 1024)).toFixed(1)} MB) exceeds the maximum allowed limit of ${config.maxTotalUploadMb} MB per submission.`);
+    errors.push(`Total upload size (${(totalSize / (1024 * 1024)).toFixed(2)} MB) exceeds the maximum allowed limit of ${config.maxTotalUploadMb} MB per submission. Your total documents exceed the maximum submission size of ${config.maxTotalUploadMb} MB. Please remove some files or submit them separately.`);
   }
 
   return {

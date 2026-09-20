@@ -176,7 +176,7 @@ docker-compose up --build -d
 
 - **Zero Sensitive Data Logging**: Server logs log operational metadata only (`[SB-2026-XXXXXXXX] 4 files validated, 8.2 MB`). File binary buffers, bank account numbers, transaction details, and client secrets are **NEVER logged**.
 - **Magic Byte File Signatures**: Server inspects initial file byte headers (`%PDF-`, JPEG `FF D8 FF`, PNG `89 50 4E 47`, WEBP `RIFF...WEBP`, XLS/XLSX `PK\x03\x04`, etc.) to reject executable binaries (`.exe`, `.elf`), scripts (`.php`, `.js`, `.sh`), or HTML/SVG injection vectors.
-- **Configurable Size Limits**: Individual file limit (`MAX_FILE_SIZE_MB=25`), total submission upload limit (`MAX_TOTAL_UPLOAD_MB=100`).
+- **Configurable Size Limits**: Individual file limit (`MAX_FILE_SIZE_MB=25`), total submission upload limit (`MAX_TOTAL_UPLOAD_MB=70`).
 
 ---
 

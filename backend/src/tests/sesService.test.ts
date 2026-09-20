@@ -5,12 +5,13 @@ import os from 'os';
 import fs from 'fs';
 import { SesService, DynamicSubmissionPayload } from '../services/ses/sesService.js';
 import { getFormConfig } from '../forms/formRegistry.js';
+import { ZipPackageResult } from '../services/zip/zipService.js';
 
 describe('AWS SES Service Unit Tests', () => {
-  test('SesService generates raw MIME message buffer with attachments and headers', () => {
+  test('SesService generates raw MIME message buffer with ZIP attachment and headers', () => {
     const sesService = new SesService();
-    const tempFile = path.join(os.tmpdir(), `ses-test-${Date.now()}.pdf`);
-    fs.writeFileSync(tempFile, Buffer.from('%PDF-1.4 Mock PDF Document'));
+    const tempZipFile = path.join(os.tmpdir(), `ses-test-${Date.now()}.zip`);
+    fs.writeFileSync(tempZipFile, Buffer.from('PK\x03\x04Mock ZIP File Content'));
 
     try {
       const mockForm = getFormConfig('bookkeeping-documents')!;
@@ -25,64 +26,82 @@ describe('AWS SES Service Unit Tests', () => {
           selectedPeriod: 'April 2026',
         },
         clientEmail: 'client@example.com',
-        categoryStatuses: {
-          bank_statements: { status: 'has_documents', notes: 'April bank statement' },
-          credit_cards: { status: 'na' },
-        },
-        additionalNotes: 'Please process urgently',
-        files: [
-          {
-            category: 'bank_statements',
-            originalName: 'bank_statement_april.pdf',
-            sanitizedName: 'bank_statement_april.pdf',
-            tempFilePath: tempFile,
-            mimeType: 'application/pdf',
-            sizeBytes: 2500,
-          },
-        ],
+        categoryStatuses: {},
+        files: [],
       };
 
-      const htmlBody = sesService.generateHtmlEmailBody(payload);
+      const partInfo = {
+        partIndex: 1,
+        totalParts: 1,
+        zipPath: tempZipFile,
+        zipFilename: 'SecureBooks_Submission_SB-2026-TEST1234.zip',
+        fileCount: 1,
+        sizeBytes: 100,
+      };
+
+      const htmlBody = sesService.generatePartHtmlEmailBody(payload, partInfo);
       assert.ok(htmlBody.includes('SB-2026-TEST1234'));
       assert.ok(htmlBody.includes('Test Client Ltd'));
-      assert.ok(htmlBody.includes('Status: AVAILABLE'));
-      assert.ok(htmlBody.includes('bank_statement_april.pdf'));
-      assert.ok(htmlBody.includes('Status: N/A'));
+      assert.ok(htmlBody.includes('SecureBooks_Submission_SB-2026-TEST1234.zip'));
 
-      const rawMimeBuffer = sesService.buildRawMimeMessage(
+      const rawMimeBuffer = sesService.buildZipRawMimeMessage(
         'mahesh_bharambe@outlook.com',
         'mahesh_bharambe@outlook.com',
-        'Bookkeeping Documents Submission - Test Client Ltd - April 2026',
+        'Secure Books - Document Submission SB-2026-TEST1234',
         htmlBody,
-        payload.files
+        tempZipFile,
+        'SecureBooks_Submission_SB-2026-TEST1234.zip'
       );
 
       const mimeString = rawMimeBuffer.toString('utf-8');
       assert.ok(mimeString.includes('From: mahesh_bharambe@outlook.com'));
       assert.ok(mimeString.includes('To: mahesh_bharambe@outlook.com'));
       assert.ok(mimeString.includes('Content-Type: multipart/mixed'));
-      assert.ok(mimeString.includes('bank_statement_april.pdf'));
+      assert.ok(mimeString.includes('SecureBooks_Submission_SB-2026-TEST1234.zip'));
       assert.ok(mimeString.includes('Content-Transfer-Encoding: base64'));
     } finally {
-      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+      if (fs.existsSync(tempZipFile)) fs.unlinkSync(tempZipFile);
     }
   });
 
-  test('SesService sends submission email in mock mode', async () => {
+  test('SesService sends ZIP submission email package in mock mode', async () => {
     process.env.MOCK_SES = 'true';
     const sesService = new SesService();
-    const mockForm = getFormConfig('bookkeeping-documents')!;
-    
-    const res = await sesService.sendSubmissionEmail({
-      formConfig: mockForm,
-      reference: 'SB-2026-MOCK9999',
-      fieldValues: { clientName: 'Mock Client' },
-      categoryStatuses: {},
-      files: [],
-    });
+    const tempZipFile = path.join(os.tmpdir(), `ses-mock-${Date.now()}.zip`);
+    fs.writeFileSync(tempZipFile, Buffer.from('PK\x03\x04Mock ZIP Content'));
 
-    assert.strictEqual(res.success, true);
-    assert.strictEqual(res.mode, 'mock_ses');
-    assert.ok(res.messageId?.startsWith('mock-ses-msg-'));
+    try {
+      const mockForm = getFormConfig('bookkeeping-documents')!;
+      const payload: DynamicSubmissionPayload = {
+        formConfig: mockForm,
+        reference: 'SB-2026-MOCK9999',
+        fieldValues: { clientName: 'Mock Client' },
+        categoryStatuses: {},
+        files: [],
+      };
+
+      const zipPackage: ZipPackageResult = {
+        reference: 'SB-2026-MOCK9999',
+        isMultiPart: false,
+        parts: [
+          {
+            partIndex: 1,
+            totalParts: 1,
+            zipPath: tempZipFile,
+            zipFilename: 'SecureBooks_Submission_SB-2026-MOCK9999.zip',
+            fileCount: 0,
+            sizeBytes: 100,
+          },
+        ],
+      };
+
+      const res = await sesService.sendZipPackagesEmail(payload, zipPackage);
+
+      assert.strictEqual(res.success, true);
+      assert.strictEqual(res.mode, 'mock_ses');
+      assert.ok(res.messageId?.includes('mock-ses-msg-1-'));
+    } finally {
+      if (fs.existsSync(tempZipFile)) fs.unlinkSync(tempZipFile);
+    }
   });
 });

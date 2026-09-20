@@ -9,9 +9,11 @@ const validator_js_1 = require("../services/fileValidation/validator.js");
 const securityScanner_js_1 = require("../services/malwareScan/securityScanner.js");
 const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
 const sesService_js_1 = require("../services/ses/sesService.js");
+const zipService_js_1 = require("../services/zip/zipService.js");
 const formRegistry_js_1 = require("../forms/formRegistry.js");
 const logger_js_1 = require("../utils/logger.js");
 const sesService = new sesService_js_1.SesService();
+const zipService = new zipService_js_1.ZipService();
 function getFormsList(req, res) {
     const forms = (0, formRegistry_js_1.getAllForms)();
     return res.status(200).json(forms.map((f) => ({
@@ -120,7 +122,7 @@ async function handleDocumentSubmission(req, res, next) {
         }
         // 4. Server-Side File Validation (Magic Bytes, Extensions, Size Limits)
         const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB || '25', 10);
-        const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '25', 10);
+        const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '70', 10);
         const validationResult = (0, validator_js_1.validateUploadedFiles)(filesToValidate, {
             maxFileSizeMb,
             maxTotalUploadMb,
@@ -129,7 +131,7 @@ async function handleDocumentSubmission(req, res, next) {
             logger_js_1.Logger.warn(`[${reference}] Document validation failed`, { errors: validationResult.errors });
             return res.status(400).json({
                 success: false,
-                error: 'File validation failed. Please check supported file formats (PDF, JPG, PNG, WEBP, XLS, XLSX, CSV, ZIP) and size limits.',
+                error: 'Your total documents exceed the maximum submission size of 70 MB. Please remove some files or submit them separately.',
                 details: validationResult.errors,
             });
         }
@@ -144,7 +146,20 @@ async function handleDocumentSubmission(req, res, next) {
                 });
             }
         }
-        // 6. Build Submission Payload & Send via AWS SES API Service
+        // 6. Package Submission into Temporary ZIP Archive(s)
+        const tempDir = (0, tempCleanup_js_1.ensureSubmissionTempDir)(submissionId);
+        const zipPackage = await zipService.buildSubmissionZipPackages({
+            submissionId,
+            reference,
+            formConfig,
+            fieldValues,
+            clientEmail,
+            categoryStatuses,
+            additionalNotes,
+            files: validationResult.validatedFiles,
+            tempDir,
+        });
+        // 7. Build Submission Payload & Send via AWS SES API Service
         const payload = {
             formConfig,
             reference,
@@ -154,7 +169,7 @@ async function handleDocumentSubmission(req, res, next) {
             additionalNotes,
             files: validationResult.validatedFiles,
         };
-        const sesResult = await sesService.sendSubmissionEmail(payload);
+        const sesResult = await sesService.sendZipPackagesEmail(payload, zipPackage);
         if (!sesResult.success) {
             logger_js_1.Logger.error(`[${reference}] AWS SES submission email delivery failed`, { error: sesResult.error });
             return res.status(502).json({
@@ -166,6 +181,7 @@ async function handleDocumentSubmission(req, res, next) {
             formId,
             reference,
             filesCount: validationResult.validatedFiles.length,
+            zipPartsCount: zipPackage.parts.length,
             mode: sesResult.mode,
         });
         return res.status(200).json({
@@ -184,7 +200,7 @@ async function handleDocumentSubmission(req, res, next) {
         });
     }
     finally {
-        // 7. Clean temporary files
+        // 8. Hard-delete all temporary uploaded files and ZIP archives
         (0, tempCleanup_js_1.cleanupSubmissionTempDir)(submissionId);
     }
 }

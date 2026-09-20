@@ -146,7 +146,7 @@ export const DropZone: React.FC<DropZoneProps> = ({
 
       {/* Upload instruction near/below drag & drop area */}
       <p className="mt-2 text-xs text-slate-600 text-center font-medium bg-slate-100/90 border border-slate-200 rounded-lg py-2 px-3 w-full max-w-full [overflow-wrap:anywhere] break-words">
-        <strong>If your files are too large to submit together, please compress them into a ZIP file or submit them separately.</strong>
+        <strong>If your total files exceed 70 MB, please remove some files or submit them separately.</strong>
       </p>
     </div>
   );
