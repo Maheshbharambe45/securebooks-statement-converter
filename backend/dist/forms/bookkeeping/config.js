@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.bookkeepingFormConfig = void 0;
 exports.bookkeepingFormConfig = {
     id: 'bookkeeping-documents',
-    name: 'Bookkeeping Documents',
+    name: 'Bookkeeping & VAT Documents',
     title: 'Documents Required for Bookkeeping',
     description: 'Submit the documents and information required for your bookkeeping period.',
     status: 'ACTIVE',

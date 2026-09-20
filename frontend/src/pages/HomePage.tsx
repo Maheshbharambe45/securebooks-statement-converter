@@ -74,14 +74,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Featured Service Form */}
-      <section className="bg-slate-100/80 border-y border-slate-200 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-card p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <section className="bg-slate-100/80 border-y border-slate-200 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-card p-5 sm:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-3">
-            <span className="bg-emerald-100 text-emerald-900 text-xs font-semibold px-3 py-1 rounded-full border border-emerald-200">
+            <span className="bg-emerald-100 text-emerald-900 text-xs font-semibold px-3 py-1 rounded-full border border-emerald-200 inline-block">
               Active Form
             </span>
-            <h3 className="text-2xl font-bold font-heading text-navy-900">
-              Bookkeeping Documents
+            <h3 className="text-xl sm:text-2xl font-bold font-heading text-navy-900">
+              Bookkeeping & VAT Documents
             </h3>
             <p className="text-slate-600 text-sm max-w-xl leading-relaxed">
               Submit the documents and information required for your bookkeeping period.
@@ -90,7 +90,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate(`/forms/${BOOKKEEPING_FORM.id}`)}
-            className="shrink-0 inline-flex items-center space-x-2 bg-navy-900 hover:bg-navy-800 text-white font-bold text-sm px-6 py-3.5 rounded-xl transition"
+            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center space-x-2 bg-navy-900 hover:bg-navy-800 text-white font-bold text-sm px-6 py-3.5 rounded-xl transition"
           >
             <span>Start Form</span>
             <ArrowRight className="w-4 h-4" />

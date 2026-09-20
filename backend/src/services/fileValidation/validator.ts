@@ -1,7 +1,7 @@
 import path from 'path';
 import { validateMagicBytes, FileValidationResult } from './magicBytes.js';
 
-export const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'csv'];
+export const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'csv', 'zip'];
 
 export interface FileMetadata {
   category: string;
@@ -41,7 +41,7 @@ export function validateUploadedFiles(
 
     // 1. Extension Whitelist
     if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      errors.push(`File "${file.originalName}" has an unsupported format (.${extension}). Allowed: PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV.`);
+      errors.push(`File "${file.originalName}" has an unsupported format (.${extension}). Allowed: PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV, ZIP.`);
       continue;
     }
 

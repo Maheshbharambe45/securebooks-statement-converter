@@ -50,29 +50,29 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-sm text-slate-700">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6 text-sm text-slate-700">
           {/* Client Details */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 grid grid-cols-2 gap-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <span className="text-xs text-slate-400 font-semibold block uppercase">Client Name</span>
-              <strong className="text-navy-900 text-base">{clientInfo.clientName}</strong>
+              <strong className="text-navy-900 text-sm sm:text-base [overflow-wrap:anywhere] break-words block">{clientInfo.clientName}</strong>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold block uppercase">Bookkeeping Period</span>
-              <strong className="text-navy-900 text-sm">{clientInfo.bookkeepingPeriod}</strong>
+              <strong className="text-navy-900 text-xs sm:text-sm [overflow-wrap:anywhere] break-words block">{clientInfo.bookkeepingPeriod}</strong>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold block uppercase">Month / Quarter</span>
-              <span className="text-slate-800 font-medium">{clientInfo.monthQuarter}</span>
+              <span className="text-slate-800 font-medium [overflow-wrap:anywhere] break-words block">{clientInfo.monthQuarter}</span>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold block uppercase">Total Attached Files</span>
-              <span className="text-emerald-700 font-bold">{totalFilesCount} Files</span>
+              <span className="text-emerald-700 font-bold block">{totalFilesCount} Files</span>
             </div>
             {clientInfo.clientEmail && (
-              <div className="col-span-2 border-t border-slate-200 pt-2">
+              <div className="col-span-1 sm:col-span-2 border-t border-slate-200 pt-2">
                 <span className="text-xs text-slate-400 font-semibold block uppercase">Contact Email</span>
-                <span className="text-slate-700">{clientInfo.clientEmail}</span>
+                <span className="text-slate-700 [overflow-wrap:anywhere] break-words block">{clientInfo.clientEmail}</span>
               </div>
             )}
           </div>
@@ -89,13 +89,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                 const isNA = catState.status === 'na';
 
                 return (
-                  <div key={cat.id} className="p-3 flex items-center justify-between hover:bg-slate-50">
+                  <div key={cat.id} className="p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 hover:bg-slate-50">
                     <div className="flex items-center space-x-2.5 min-w-0 pr-2">
                       <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span className="font-medium text-slate-800 text-xs sm:text-sm truncate">{cat.title}</span>
+                      <span className="font-medium text-slate-800 text-xs sm:text-sm [overflow-wrap:anywhere] break-words">{cat.title}</span>
                     </div>
 
-                    <div className="flex items-center space-x-2 shrink-0">
+                    <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
                       {isNA ? (
                         <span className="inline-flex items-center space-x-1 text-xs bg-slate-100 text-slate-500 font-medium px-2.5 py-1 rounded-md">
                           <Ban className="w-3 h-3 text-slate-400" />

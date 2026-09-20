@@ -84,9 +84,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
       {/* Selected Period Display */}
       {startDate && endDate && !errors.dateRange && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs text-emerald-900 font-semibold flex items-center space-x-2">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-xs text-emerald-900 font-semibold flex items-center space-x-2 min-w-0 w-full max-w-full">
           <CalendarIcon className="w-4 h-4 text-emerald-700 shrink-0" />
-          <span>
+          <span className="min-w-0 [overflow-wrap:anywhere] break-words">
             Bookkeeping Period: {formatDateDisplay(startDate)} → {formatDateDisplay(endDate)}
           </span>
         </div>

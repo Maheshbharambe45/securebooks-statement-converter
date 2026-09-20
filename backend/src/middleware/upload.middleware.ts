@@ -27,7 +27,7 @@ export const fileFilter: multer.Options['fileFilter'] = (req, file, cb) => {
   if (ALLOWED_EXTENSIONS.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file extension .${ext}. Only PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV are allowed.`));
+    cb(new Error(`Invalid file extension .${ext}. Only PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV, ZIP are allowed.`));
   }
 };
 

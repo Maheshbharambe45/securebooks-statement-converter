@@ -12,7 +12,7 @@ const formRegistry_js_1 = require("../forms/formRegistry.js");
         node_assert_1.default.strictEqual(forms.length >= 4, true);
         const bookkeeping = (0, formRegistry_js_1.getFormConfig)('bookkeeping-documents');
         node_assert_1.default.ok(bookkeeping);
-        node_assert_1.default.strictEqual(bookkeeping?.name, 'Bookkeeping Documents');
+        node_assert_1.default.strictEqual(bookkeeping?.name, 'Bookkeeping & VAT Documents');
         node_assert_1.default.strictEqual(bookkeeping?.status, 'ACTIVE');
         node_assert_1.default.strictEqual(bookkeeping?.documentCategories.length, 12);
         const vat = (0, formRegistry_js_1.getFormConfig)('vat-submission');

@@ -12,7 +12,7 @@ const sweeperInterval = (0, tempCleanup_js_1.startBackgroundRetentionSweeper)();
 const server = app_js_1.default.listen(PORT, () => {
     logger_js_1.Logger.info(`Secure Books Backend API running on port ${PORT}`);
     logger_js_1.Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger_js_1.Logger.info(`Microsoft Graph Mode: ${process.env.MICROSOFT_CLIENT_ID ? 'Azure Entra ID Active' : 'Mock Mode Active (Local Testing)'}`);
+    logger_js_1.Logger.info(`Email Architecture: ${process.env.SMTP_HOST ? `SMTP Active (${process.env.SMTP_HOST})` : 'Mock SMTP Mode Active (Local Testing)'}`);
 });
 // Graceful shutdown handling
 const gracefulShutdown = (signal) => {

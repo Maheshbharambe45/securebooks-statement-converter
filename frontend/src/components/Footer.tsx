@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button onClick={() => onNavigate('/forms/bookkeeping-documents')} className="hover:text-white transition">
-                  Bookkeeping Documents
+                  Bookkeeping & VAT Documents
                 </button>
               </li>
               <li>

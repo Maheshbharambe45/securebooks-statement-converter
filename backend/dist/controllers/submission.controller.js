@@ -7,10 +7,10 @@ const referenceGenerator_js_1 = require("../utils/referenceGenerator.js");
 const validator_js_1 = require("../services/fileValidation/validator.js");
 const securityScanner_js_1 = require("../services/malwareScan/securityScanner.js");
 const tempCleanup_js_1 = require("../services/cleanup/tempCleanup.js");
-const graphService_js_1 = require("../services/microsoftGraph/graphService.js");
+const smtpService_js_1 = require("../services/smtp/smtpService.js");
 const formRegistry_js_1 = require("../forms/formRegistry.js");
 const logger_js_1 = require("../utils/logger.js");
-const graphService = new graphService_js_1.MicrosoftGraphService();
+const smtpService = new smtpService_js_1.SmtpService();
 function getFormsList(req, res) {
     const forms = (0, formRegistry_js_1.getAllForms)();
     return res.status(200).json(forms.map((f) => ({
@@ -104,7 +104,7 @@ async function handleDocumentSubmission(req, res, next) {
             logger_js_1.Logger.warn(`[${reference}] Document validation failed`, { errors: validationResult.errors });
             return res.status(400).json({
                 success: false,
-                error: 'File validation failed. Please check supported file formats (PDF, JPG, PNG, WEBP, XLS, XLSX, CSV) and size limits.',
+                error: 'File validation failed. Please check supported file formats (PDF, JPG, PNG, WEBP, XLS, XLSX, CSV, ZIP) and size limits.',
                 details: validationResult.errors,
             });
         }
@@ -119,7 +119,7 @@ async function handleDocumentSubmission(req, res, next) {
                 });
             }
         }
-        // 6. Build Submission Payload & Send via Microsoft Graph Service
+        // 6. Build Submission Payload & Send via SMTP Service
         const payload = {
             formConfig,
             reference,
@@ -129,20 +129,20 @@ async function handleDocumentSubmission(req, res, next) {
             additionalNotes,
             files: validationResult.validatedFiles,
         };
-        const graphResult = await graphService.sendSubmissionEmail(payload);
-        if (!graphResult.success) {
-            logger_js_1.Logger.error(`[${reference}] Microsoft Graph submission email delivery failed`, { error: graphResult.error });
+        const smtpResult = await smtpService.sendSubmissionEmail(payload);
+        if (!smtpResult.success) {
+            logger_js_1.Logger.error(`[${reference}] SMTP submission email delivery failed`, { error: smtpResult.error });
             return res.status(502).json({
                 success: false,
                 error: "We couldn't submit your documents right now. Please try again or contact info@securebooks.co.uk",
-                details: graphResult.error,
+                details: smtpResult.error,
             });
         }
-        logger_js_1.Logger.info(`[${reference}] Submission successfully processed & delivered to Outlook`, {
+        logger_js_1.Logger.info(`[${reference}] Submission successfully processed & delivered via SMTP`, {
             formId,
             reference,
             filesCount: validationResult.validatedFiles.length,
-            mode: graphResult.mode,
+            mode: smtpResult.mode,
         });
         return res.status(200).json({
             success: true,

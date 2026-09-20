@@ -9,7 +9,7 @@ test('Form Registry Tests', async (t) => {
 
     const bookkeeping = getFormConfig('bookkeeping-documents');
     assert.ok(bookkeeping);
-    assert.strictEqual(bookkeeping?.name, 'Bookkeeping Documents');
+    assert.strictEqual(bookkeeping?.name, 'Bookkeeping & VAT Documents');
     assert.strictEqual(bookkeeping?.status, 'ACTIVE');
     assert.strictEqual(bookkeeping?.documentCategories.length, 12);
 

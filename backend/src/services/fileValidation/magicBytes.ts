@@ -100,6 +100,20 @@ export function validateMagicBytes(filePath: string, originalFilename: string): 
       return { isValid: true, detectedType: 'text/csv' };
     }
 
+    case 'zip': {
+      // ZIP archive header starts with PK\x03\x04 (0x50 0x4B 0x03 0x04) or PK\x05\x06 (empty zip) or PK\x07\x08 (spanned)
+      if (
+        buffer.length >= 4 &&
+        buffer[0] === 0x50 &&
+        buffer[1] === 0x4b &&
+        (buffer[2] === 0x03 || buffer[2] === 0x05 || buffer[2] === 0x07) &&
+        (buffer[3] === 0x04 || buffer[3] === 0x06 || buffer[3] === 0x08)
+      ) {
+        return { isValid: true, detectedType: 'application/zip' };
+      }
+      return { isValid: false, error: 'File header does not match valid ZIP archive signature.' };
+    }
+
     default:
       return { isValid: false, error: `Unsupported file extension: .${extension}` };
   }

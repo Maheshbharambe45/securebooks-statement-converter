@@ -28,25 +28,25 @@ export const MonthQuarterSelector: React.FC<MonthQuarterSelectorProps> = ({
   return (
     <div className="space-y-4">
       {/* Type Selector: Radio Toggle */}
-      <div className="flex items-center space-x-6 bg-slate-100/80 p-2 rounded-xl border border-slate-200">
-        <label className="inline-flex items-center space-x-2 cursor-pointer font-semibold text-xs text-slate-700">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-6 bg-slate-100/80 p-2 rounded-xl border border-slate-200">
+        <label className="inline-flex items-center space-x-2 cursor-pointer font-semibold text-xs text-slate-700 min-h-[38px]">
           <input
             type="radio"
             name="period_type"
             checked={type === 'month'}
             onChange={() => onChange('month', selectedMonth || 'April', selectedYear || '2026', selectedQuarter)}
-            className="accent-emerald-700 w-4 h-4"
+            className="accent-emerald-700 w-4 h-4 shrink-0"
           />
           <span>Month</span>
         </label>
 
-        <label className="inline-flex items-center space-x-2 cursor-pointer font-semibold text-xs text-slate-700">
+        <label className="inline-flex items-center space-x-2 cursor-pointer font-semibold text-xs text-slate-700 min-h-[38px]">
           <input
             type="radio"
             name="period_type"
             checked={type === 'quarter'}
             onChange={() => onChange('quarter', selectedMonth, selectedYear || '2026', selectedQuarter || 'Q1')}
-            className="accent-emerald-700 w-4 h-4"
+            className="accent-emerald-700 w-4 h-4 shrink-0"
           />
           <span>Quarter</span>
         </label>

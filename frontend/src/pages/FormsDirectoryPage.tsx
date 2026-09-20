@@ -33,7 +33,7 @@ export const FormsDirectoryPage: React.FC<FormsDirectoryPageProps> = ({ onNaviga
             {availableForms.map((form) => (
               <div
                 key={form.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-elevated transition p-8 flex flex-col justify-between"
+                className="bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-elevated transition p-5 sm:p-8 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -72,7 +72,7 @@ export const FormsDirectoryPage: React.FC<FormsDirectoryPageProps> = ({ onNaviga
             {upcomingForms.map((form) => (
               <div
                 key={form.id}
-                className="bg-white/80 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs relative overflow-hidden"
+                className="bg-white/80 rounded-2xl border border-slate-200 p-5 sm:p-6 flex flex-col justify-between shadow-xs relative overflow-hidden"
               >
                 <div>
                   <div className="flex justify-between items-start mb-3">

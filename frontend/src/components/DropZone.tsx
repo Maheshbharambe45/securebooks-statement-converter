@@ -50,14 +50,14 @@ export const DropZone: React.FC<DropZoneProps> = ({
   };
 
   return (
-    <div className={`relative transition-all duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+    <div className={`relative w-full max-w-full transition-all duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
       {/* Hidden inputs */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         multiple
-        accept=".pdf,.jpg,.jpeg,.png,.webp,.xls,.xlsx,.csv"
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.xls,.xlsx,.csv,.zip"
         disabled={disabled}
         className="hidden"
       />
@@ -76,7 +76,8 @@ export const DropZone: React.FC<DropZoneProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
+        title="Click to browse documents"
+        className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 w-full max-w-full ${
           disabled
             ? 'border-slate-200 bg-slate-100/70 text-slate-400'
             : isDragOver
@@ -84,24 +85,24 @@ export const DropZone: React.FC<DropZoneProps> = ({
             : 'border-slate-300 bg-slate-50/60 hover:bg-slate-100/80 hover:border-slate-400'
         }`}
       >
-        <div className="flex flex-col items-center justify-center space-y-3">
+        <div className="flex flex-col items-center justify-center space-y-3 w-full max-w-full">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
             disabled ? 'bg-slate-200 text-slate-400' : isDragOver ? 'bg-emerald-600 text-white' : 'bg-navy-50 text-navy-800'
           }`}>
             <UploadCloud className="w-6 h-6" />
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-navy-900">
+          <div className="w-full max-w-full">
+            <p className="text-xs sm:text-sm font-semibold text-navy-900 [overflow-wrap:anywhere] break-words">
               📎 Drag & Drop Your Documents Here
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              or click to browse files from your computer
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              Click to browse documents
             </p>
           </div>
 
           {/* Format Badges */}
-          <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+          <div className="flex flex-wrap justify-center gap-1.5 pt-1 w-full max-w-full">
             {supportedFormats.map((fmt) => (
               <span key={fmt} className="text-[11px] font-medium bg-white text-slate-600 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
                 {fmt}
@@ -110,15 +111,16 @@ export const DropZone: React.FC<DropZoneProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap justify-center gap-2 pt-2">
+          <div className="flex flex-wrap justify-center gap-2 pt-2 w-full max-w-full">
             <button
               type="button"
               disabled={disabled}
+              title="Click to browse documents"
               onClick={(e) => {
                 e.stopPropagation();
                 if (!disabled) fileInputRef.current?.click();
               }}
-              className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-navy-800 hover:bg-navy-900 text-white px-3.5 py-1.5 rounded-lg shadow-sm transition disabled:opacity-50"
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-navy-800 hover:bg-navy-900 text-white px-3.5 py-2 rounded-lg shadow-sm transition disabled:opacity-50 min-h-[38px]"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Choose Files</span>
@@ -128,11 +130,12 @@ export const DropZone: React.FC<DropZoneProps> = ({
             <button
               type="button"
               disabled={disabled}
+              title="Click to browse documents"
               onClick={(e) => {
                 e.stopPropagation();
                 if (!disabled) cameraInputRef.current?.click();
               }}
-              className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg shadow-sm transition disabled:opacity-50"
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-lg shadow-sm transition disabled:opacity-50 min-h-[38px]"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>Take Receipt Photo</span>
@@ -140,6 +143,11 @@ export const DropZone: React.FC<DropZoneProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Upload instruction near/below drag & drop area */}
+      <p className="mt-2 text-xs text-slate-600 text-center font-medium bg-slate-100/90 border border-slate-200 rounded-lg py-2 px-3 w-full max-w-full [overflow-wrap:anywhere] break-words">
+        <strong>If your files exceed 50 MB, please compress them into a ZIP file before uploading.</strong>
+      </p>
     </div>
   );
 };

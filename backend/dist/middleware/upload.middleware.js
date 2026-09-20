@@ -32,7 +32,7 @@ const fileFilter = (req, file, cb) => {
         cb(null, true);
     }
     else {
-        cb(new Error(`Invalid file extension .${ext}. Only PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV are allowed.`));
+        cb(new Error(`Invalid file extension .${ext}. Only PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV, ZIP are allowed.`));
     }
 };
 exports.fileFilter = fileFilter;

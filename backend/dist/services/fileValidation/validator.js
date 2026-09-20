@@ -8,7 +8,7 @@ exports.sanitizeFilename = sanitizeFilename;
 exports.validateUploadedFiles = validateUploadedFiles;
 const path_1 = __importDefault(require("path"));
 const magicBytes_js_1 = require("./magicBytes.js");
-exports.ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'csv'];
+exports.ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'csv', 'zip'];
 function sanitizeFilename(filename) {
     // Remove directory traversal characters (.. / \)
     const basename = path_1.default.basename(filename);
@@ -26,7 +26,7 @@ function validateUploadedFiles(files, config) {
         const extension = file.originalName.split('.').pop()?.toLowerCase() || '';
         // 1. Extension Whitelist
         if (!exports.ALLOWED_EXTENSIONS.includes(extension)) {
-            errors.push(`File "${file.originalName}" has an unsupported format (.${extension}). Allowed: PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV.`);
+            errors.push(`File "${file.originalName}" has an unsupported format (.${extension}). Allowed: PDF, JPG, JPEG, PNG, WEBP, XLS, XLSX, CSV, ZIP.`);
             continue;
         }
         // 2. Individual file size check

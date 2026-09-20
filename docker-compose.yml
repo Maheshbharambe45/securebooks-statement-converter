@@ -1,26 +1,38 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: secure-books-backend
-    restart: always
+    restart: unless-stopped
+
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID}
-      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
-      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
-      - OUTLOOK_SENDER=${OUTLOOK_SENDER:-info@securebooks.co.uk}
-      - OUTLOOK_RECIPIENT=${OUTLOOK_RECIPIENT:-info@securebooks.co.uk}
-      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-25}
-      - MAX_TOTAL_UPLOAD_MB=${MAX_TOTAL_UPLOAD_MB:-100}
-      - TEMP_FILE_RETENTION_MINUTES=${TEMP_FILE_RETENTION_MINUTES:-30}
-      - MALWARE_SCAN_ENABLED=${MALWARE_SCAN_ENABLED:-true}
+      NODE_ENV: production
+      PORT: 3000
+
+      FRONTEND_URL: ${FRONTEND_URL}
+
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_TO: ${MAIL_TO}
+
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-25}
+      MAX_TOTAL_UPLOAD_MB: ${MAX_TOTAL_UPLOAD_MB:-100}
+      MAX_FILES_PER_CATEGORY: ${MAX_FILES_PER_CATEGORY:-20}
+      MAX_FILES_PER_SUBMISSION: ${MAX_FILES_PER_SUBMISSION:-50}
+      MAX_CONCURRENT_UPLOADS: ${MAX_CONCURRENT_UPLOADS:-5}
+      EMAIL_CONCURRENCY: ${EMAIL_CONCURRENCY:-2}
+      TEMP_FILE_RETENTION_MINUTES: ${TEMP_FILE_RETENTION_MINUTES:-30}
+      MALWARE_SCAN_ENABLED: ${MALWARE_SCAN_ENABLED:-true}
+
     tmpfs:
       - /tmp/secure-books-uploads:rw,noexec,nosuid,size=512m
 
@@ -29,9 +41,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: secure-books-frontend
-    restart: always
+    restart: unless-stopped
+
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:8080:80"
+
     depends_on:
       - backend

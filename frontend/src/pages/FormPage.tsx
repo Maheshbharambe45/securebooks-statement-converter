@@ -348,7 +348,7 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
         {/* Client Details Section */}
         <div className="bg-white rounded-2xl shadow-card border border-slate-200 p-6 sm:p-8 mb-8">
           <div className="border-b border-slate-100 pb-4 mb-6">
-            <h2 className="text-xl font-bold font-heading text-navy-900">Client & Period Details</h2>
+            <h2 className="text-xl font-bold font-heading text-navy-900">Client Details</h2>
             <p className="text-xs text-slate-500">Provide your name and the bookkeeping period for this submission.</p>
           </div>
 
@@ -460,7 +460,7 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
                 uploadLabel: cat.uploadLabel,
                 description: cat.description,
                 notesLabel: cat.notesLabel || 'Notes for Bookkeeper:',
-                supportedFormats: ['PDF', 'JPG', 'JPEG', 'PNG', 'WEBP', 'XLS', 'XLSX', 'CSV'],
+                supportedFormats: ['PDF', 'JPG', 'JPEG', 'PNG', 'WEBP', 'XLS', 'XLSX', 'CSV', 'ZIP'],
                 allowsMultiple: true,
                 allowsNA: true,
               }}

@@ -2,7 +2,7 @@ import { FormConfig } from '../types.js';
 
 export const bookkeepingFormConfig: FormConfig = {
   id: 'bookkeeping-documents',
-  name: 'Bookkeeping Documents',
+  name: 'Bookkeeping & VAT Documents',
   title: 'Documents Required for Bookkeeping',
   description: 'Submit the documents and information required for your bookkeeping period.',
   status: 'ACTIVE',

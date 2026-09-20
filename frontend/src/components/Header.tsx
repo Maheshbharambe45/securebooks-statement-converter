@@ -21,10 +21,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate }) => {
       {/* Top Bar */}
       <div className="bg-navy-900 text-white text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-2 text-slate-200">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-slate-200">
             <span className="font-semibold text-emerald-400">Secure Books</span>
-            <span>|</span>
-            <span className="text-slate-300">Client Forms Portal</span>
+            <span className="hidden xs:inline">|</span>
+            <span className="text-slate-300">Client Documents Portal</span>
           </div>
           <div className="hidden sm:flex items-center space-x-4 text-slate-300">
             <a href="mailto:info@securebooks.co.uk" className="hover:text-white flex items-center space-x-1.5 transition">
@@ -36,25 +36,25 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate }) => {
       </div>
 
       {/* Main Header Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-2">
         {/* Logo Branding */}
         <button
           onClick={() => onNavigate('/')}
-          className="flex items-center space-x-3 text-left focus:outline-none group"
+          className="flex items-center space-x-2 sm:space-x-3 text-left focus:outline-none group min-w-0 shrink"
         >
           <img
             src="/logo.png"
             alt="Secure Books Logo"
-            className="h-10 sm:h-12 w-auto object-contain"
+            className="h-8 sm:h-12 w-auto object-contain shrink-0"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }}
           />
-          <div>
-            <div className="text-xl sm:text-2xl font-bold font-heading text-navy-900 leading-none group-hover:text-emerald-700 transition">
+          <div className="min-w-0 flex-1">
+            <div className="text-lg sm:text-2xl font-bold font-heading text-navy-900 leading-none group-hover:text-emerald-700 transition truncate">
               Secure <span className="text-emerald-700">Books</span>
             </div>
-            <p className="text-xs text-slate-500 font-medium tracking-wide mt-0.5">Professional Bookkeeping & Accounting</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-tight mt-0.5 leading-tight truncate">Professional Bookkeeping & Accounting Support</p>
           </div>
         </button>
 
@@ -87,10 +87,11 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate }) => {
         </nav>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden">
+        <div className="md:hidden shrink-0">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-600 hover:text-navy-900 hover:bg-slate-100 focus:outline-none"
+            className="min-w-[44px] min-h-[44px] p-2 flex items-center justify-center rounded-lg text-slate-600 hover:text-navy-900 hover:bg-slate-100 focus:outline-none"
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

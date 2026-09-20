@@ -10,7 +10,7 @@ const sweeperInterval = startBackgroundRetentionSweeper();
 const server = app.listen(PORT, () => {
   Logger.info(`Secure Books Backend API running on port ${PORT}`);
   Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  Logger.info(`Microsoft Graph Mode: ${process.env.MICROSOFT_CLIENT_ID ? 'Azure Entra ID Active' : 'Mock Mode Active (Local Testing)'}`);
+  Logger.info(`Email Architecture: ${process.env.SMTP_HOST ? `SMTP Active (${process.env.SMTP_HOST})` : 'Mock SMTP Mode Active (Local Testing)'}`);
 });
 
 // Graceful shutdown handling

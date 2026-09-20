@@ -37,12 +37,12 @@ export const FilePreviewList: React.FC<FilePreviewListProps> = ({ files, onRemov
 
       <div className="divide-y divide-slate-100 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
         {files.map((file, index) => (
-          <div key={`${file.name}-${index}`} className="flex items-center justify-between p-2.5 hover:bg-slate-50 transition">
-            <div className="flex items-center space-x-3 min-w-0 pr-2">
+          <div key={`${file.name}-${index}`} className="flex items-center justify-between p-2.5 hover:bg-slate-50 transition gap-2 min-w-0">
+            <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 pr-2 flex-1">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               {getFileIcon(file.name)}
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate" title={file.name}>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-800 truncate [overflow-wrap:anywhere] break-all" title={file.name}>
                   {file.name}
                 </p>
                 <p className="text-xs text-slate-400">{formatFileSize(file.size)}</p>
