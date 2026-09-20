@@ -207,7 +207,8 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
     const fieldValuesPayload = {
       clientName: clientName.trim(),
       bookkeepingPeriod: formattedPeriodDisplay,
-      monthQuarter: formattedMonthQuarter,
+      selectionType: periodType === 'month' ? 'Month' : 'Quarter',
+      selectedPeriod: formattedMonthQuarter,
       startDate,
       endDate,
       clientEmail: clientEmail.trim(),
