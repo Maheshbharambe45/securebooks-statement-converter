@@ -10,7 +10,7 @@ const sweeperInterval = startBackgroundRetentionSweeper();
 const server = app.listen(PORT, () => {
   Logger.info(`Secure Books Backend API running on port ${PORT}`);
   Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  Logger.info(`Email Architecture: ${process.env.SMTP_HOST ? `SMTP Active (${process.env.SMTP_HOST})` : 'Mock SMTP Mode Active (Local Testing)'}`);
+  Logger.info(`Email Architecture: AWS SES API (Region: ${process.env.AWS_REGION || 'ap-south-1'}, From: ${process.env.MAIL_FROM || 'mahesh_bharambe@outlook.com'}, To: ${process.env.MAIL_TO || 'mahesh_bharambe@outlook.com'})`);
 });
 
 // Graceful shutdown handling

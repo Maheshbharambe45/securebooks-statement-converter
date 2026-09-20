@@ -1,19 +1,19 @@
 {
   "name": "secure-books-backend",
   "version": "1.0.0",
-  "description": "Secure Direct-to-Outlook Document Submission Backend API for Secure Books",
+  "description": "Secure AWS SES Document Submission Backend API for Secure Books",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "test": "npx tsx --test src/tests/validation.test.ts src/tests/formsRegistry.test.ts"
+    "test": "npx tsx --test src/tests/validation.test.ts src/tests/formsRegistry.test.ts src/tests/sesService.test.ts"
   },
   "keywords": [
     "secure-books",
     "bookkeeping",
-    "microsoft-graph",
-    "outlook",
+    "aws-ses",
+    "aws-sdk",
     "document-submission"
   ],
   "author": "Secure Books Development Team",
@@ -25,15 +25,14 @@
     "express-rate-limit": "^7.3.1",
     "helmet": "^7.1.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.14",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "@aws-sdk/client-ses": "^3.600.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.9",
-    "@types/nodemailer": "^6.4.15",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.2"

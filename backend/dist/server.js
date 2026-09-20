@@ -12,7 +12,7 @@ const sweeperInterval = (0, tempCleanup_js_1.startBackgroundRetentionSweeper)();
 const server = app_js_1.default.listen(PORT, () => {
     logger_js_1.Logger.info(`Secure Books Backend API running on port ${PORT}`);
     logger_js_1.Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger_js_1.Logger.info(`Email Architecture: ${process.env.SMTP_HOST ? `SMTP Active (${process.env.SMTP_HOST})` : 'Mock SMTP Mode Active (Local Testing)'}`);
+    logger_js_1.Logger.info(`Email Architecture: AWS SES API (Region: ${process.env.AWS_REGION || 'ap-south-1'}, From: ${process.env.MAIL_FROM || 'mahesh_bharambe@outlook.com'}, To: ${process.env.MAIL_TO || 'mahesh_bharambe@outlook.com'})`);
 });
 // Graceful shutdown handling
 const gracefulShutdown = (signal) => {

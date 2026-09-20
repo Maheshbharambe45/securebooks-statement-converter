@@ -3,11 +3,11 @@ import { generateSubmissionReference } from '../utils/referenceGenerator.js';
 import { validateUploadedFiles } from '../services/fileValidation/validator.js';
 import { scanFileForMalware } from '../services/malwareScan/securityScanner.js';
 import { cleanupSubmissionTempDir } from '../services/cleanup/tempCleanup.js';
-import { SmtpService, DynamicSubmissionPayload } from '../services/smtp/smtpService.js';
+import { SesService, DynamicSubmissionPayload } from '../services/ses/sesService.js';
 import { getFormConfig, getAllForms } from '../forms/formRegistry.js';
 import { Logger } from '../utils/logger.js';
 
-const smtpService = new SmtpService();
+const sesService = new SesService();
 
 export function getFormsList(req: Request, res: Response) {
   const forms = getAllForms();
@@ -109,7 +109,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
 
     // 4. Server-Side File Validation (Magic Bytes, Extensions, Size Limits)
     const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB || '25', 10);
-    const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '100', 10);
+    const maxTotalUploadMb = parseInt(process.env.MAX_TOTAL_UPLOAD_MB || '25', 10);
 
     const validationResult = validateUploadedFiles(filesToValidate, {
       maxFileSizeMb,
@@ -137,7 +137,7 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       }
     }
 
-    // 6. Build Submission Payload & Send via SMTP Service
+    // 6. Build Submission Payload & Send via AWS SES API Service
     const payload: DynamicSubmissionPayload = {
       formConfig,
       reference,
@@ -148,22 +148,21 @@ export async function handleDocumentSubmission(req: Request, res: Response, next
       files: validationResult.validatedFiles,
     };
 
-    const smtpResult = await smtpService.sendSubmissionEmail(payload);
+    const sesResult = await sesService.sendSubmissionEmail(payload);
 
-    if (!smtpResult.success) {
-      Logger.error(`[${reference}] SMTP submission email delivery failed`, { error: smtpResult.error });
+    if (!sesResult.success) {
+      Logger.error(`[${reference}] AWS SES submission email delivery failed`, { error: sesResult.error });
       return res.status(502).json({
         success: false,
-        error: "We couldn't submit your documents right now. Please try again or contact info@securebooks.co.uk",
-        details: smtpResult.error,
+        error: "We couldn't complete your submission right now. Please try again.",
       });
     }
 
-    Logger.info(`[${reference}] Submission successfully processed & delivered via SMTP`, {
+    Logger.info(`[${reference}] Submission successfully processed & delivered via AWS SES`, {
       formId,
       reference,
       filesCount: validationResult.validatedFiles.length,
-      mode: smtpResult.mode,
+      mode: sesResult.mode,
     });
 
     return res.status(200).json({

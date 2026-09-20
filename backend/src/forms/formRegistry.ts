@@ -20,11 +20,11 @@ export function getAllForms(): FormConfig[] {
 }
 
 export function resolveFormRecipient(config: FormConfig): string {
+  if (process.env.MAIL_TO && process.env.MAIL_TO.trim()) {
+    return process.env.MAIL_TO.trim();
+  }
   if (config.emailRecipientEnvVar && process.env[config.emailRecipientEnvVar]) {
     return process.env[config.emailRecipientEnvVar]!.trim();
-  }
-  if (process.env.OUTLOOK_RECIPIENT && process.env.OUTLOOK_RECIPIENT.trim()) {
-    return process.env.OUTLOOK_RECIPIENT.trim();
   }
   return config.defaultRecipient;
 }
