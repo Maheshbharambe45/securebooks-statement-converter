@@ -15,6 +15,22 @@ export const ContactPage: React.FC = () => {
         <div className="space-y-6 w-full max-w-full">
           <div className="flex items-start space-x-3 sm:space-x-4 p-4 bg-slate-50 rounded-xl border border-slate-200 min-w-0 w-full max-w-full">
             <div className="p-3 bg-emerald-100 text-emerald-800 rounded-lg shrink-0">
+              <Phone className="w-6 h-6" />
+            </div>
+            <div className="min-w-0 flex-1 w-full max-w-full">
+              <h3 className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Telephone / Contact</h3>
+              <a
+                href="tel:+443302237940"
+                className="text-base sm:text-lg font-bold text-navy-900 hover:text-emerald-700 transition block max-w-full [overflow-wrap:anywhere] break-words break-all"
+              >
+                +44 330 223 7940
+              </a>
+              <p className="text-xs text-slate-500 mt-1">Mon - Fri: 9:00 AM - 5:00 PM GMT</p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3 sm:space-x-4 p-4 bg-slate-50 rounded-xl border border-slate-200 min-w-0 w-full max-w-full">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-lg shrink-0">
               <Mail className="w-6 h-6" />
             </div>
             <div className="min-w-0 flex-1 w-full max-w-full">
@@ -25,7 +41,6 @@ export const ContactPage: React.FC = () => {
               >
                 info@securebooks.co.uk
               </a>
-              <p className="text-xs text-slate-500 mt-1">Mon - Fri: 9:00 AM - 5:00 PM GMT</p>
             </div>
           </div>
 

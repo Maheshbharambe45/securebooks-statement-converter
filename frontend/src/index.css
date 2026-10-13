@@ -16,6 +16,10 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: #1e293b;
     background-color: #f8fafc;
+    background-image: 
+      radial-gradient(circle at 10% 10%, rgba(0, 107, 56, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(11, 31, 70, 0.03) 0%, transparent 40%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, .font-heading {

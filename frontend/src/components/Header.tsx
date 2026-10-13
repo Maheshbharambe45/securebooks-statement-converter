@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, FileText, Menu, X } from 'lucide-react';
+import { Mail, Phone, FileText, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   currentPath: string;
@@ -27,6 +27,11 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate }) => {
             <span className="text-slate-300">Client Documents Portal</span>
           </div>
           <div className="hidden sm:flex items-center space-x-4 text-slate-300">
+            <a href="tel:+443302237940" className="hover:text-white flex items-center space-x-1.5 transition">
+              <Phone className="w-3.5 h-3.5 text-emerald-400" />
+              <span>+44 330 223 7940</span>
+            </a>
+            <span className="text-slate-600">|</span>
             <a href="mailto:info@securebooks.co.uk" className="hover:text-white flex items-center space-x-1.5 transition">
               <Mail className="w-3.5 h-3.5 text-emerald-400" />
               <span>info@securebooks.co.uk</span>
@@ -37,19 +42,11 @@ export const Header: React.FC<HeaderProps> = ({ currentPath, onNavigate }) => {
 
       {/* Main Header Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-2">
-        {/* Logo Branding */}
+        {/* Text Branding */}
         <button
           onClick={() => onNavigate('/')}
           className="flex items-center space-x-2 sm:space-x-3 text-left focus:outline-none group min-w-0 shrink"
         >
-          <img
-            src="/logo.png"
-            alt="Secure Books Logo"
-            className="h-8 sm:h-12 w-auto object-contain shrink-0"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
-          />
           <div className="min-w-0 flex-1">
             <div className="text-lg sm:text-2xl font-bold font-heading text-navy-900 leading-none group-hover:text-emerald-700 transition truncate">
               Secure <span className="text-emerald-700">Books</span>

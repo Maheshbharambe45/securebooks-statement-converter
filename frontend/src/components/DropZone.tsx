@@ -93,25 +93,16 @@ export const DropZone: React.FC<DropZoneProps> = ({
           </div>
 
           <div className="w-full max-w-full">
-            <p className="text-xs sm:text-sm font-semibold text-navy-900 [overflow-wrap:anywhere] break-words">
-              📎 Drag & Drop Your Documents Here
+            <p className="text-sm font-semibold text-navy-900 [overflow-wrap:anywhere] break-words">
+              Drag & Drop Your Documents Here
             </p>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
-              Click to browse documents
+            <p className="text-xs text-slate-500 mt-0.5">
+              or click to browse from your device
             </p>
-          </div>
-
-          {/* Format Badges */}
-          <div className="flex flex-wrap justify-center gap-1.5 pt-1 w-full max-w-full">
-            {supportedFormats.map((fmt) => (
-              <span key={fmt} className="text-[11px] font-medium bg-white text-slate-600 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
-                {fmt}
-              </span>
-            ))}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap justify-center gap-2 pt-2 w-full max-w-full">
+          <div className="flex flex-wrap justify-center gap-2 pt-1 w-full max-w-full">
             <button
               type="button"
               disabled={disabled}
@@ -138,16 +129,11 @@ export const DropZone: React.FC<DropZoneProps> = ({
               className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-lg shadow-sm transition disabled:opacity-50 min-h-[38px]"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Take Receipt Photo</span>
+              <span>Take Photo</span>
             </button>
           </div>
         </div>
       </div>
-
-      {/* Upload instruction near/below drag & drop area */}
-      <p className="mt-2 text-xs text-slate-600 text-center font-medium bg-slate-100/90 border border-slate-200 rounded-lg py-2 px-3 w-full max-w-full [overflow-wrap:anywhere] break-words">
-        <strong>If your total files exceed 70 MB, please remove some files or submit them separately.</strong>
-      </p>
     </div>
   );
 };

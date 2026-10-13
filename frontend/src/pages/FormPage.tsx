@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
 import { FormDefinition, CategoryState, CategoryStatus, SubmissionResponse } from '../types';
 import { getFormDefinition, BOOKKEEPING_FORM } from '../forms/formRegistry';
-import { DateRangePicker } from '../components/DateRangePicker';
-import { MonthQuarterSelector } from '../components/MonthQuarterSelector';
 import { CategoryCard } from '../components/CategoryCard';
 import { ReviewModal } from '../components/ReviewModal';
 import { ProgressModal } from '../components/ProgressModal';
 import { SuccessPage } from '../components/SuccessPage';
 import { submitFormDocuments } from '../services/api';
 import {
-  FileText,
   User,
-  Calendar as CalendarIcon,
-  Clock,
   AlertTriangle,
   ArrowRight,
-  UploadCloud,
-  ShieldCheck,
-  CheckCircle2,
   ChevronRight,
 } from 'lucide-react';
 
@@ -31,13 +23,6 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
 
   // Form Field States
   const [clientName, setClientName] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [periodType, setPeriodType] = useState<'month' | 'quarter'>('month');
-  const [selectedMonth, setSelectedMonth] = useState<string>('April');
-  const [selectedYear, setSelectedYear] = useState<string>('2026');
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('Q1');
-  const [clientEmail, setClientEmail] = useState<string>('');
 
   // Validation Error States
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,7 +40,6 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
     return initialState;
   });
 
-  const [additionalNotes, setAdditionalNotes] = useState<string>('');
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   // Workflow Modal States
@@ -131,48 +115,6 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
       errs.clientName = 'Client Name is required.';
     }
 
-    if (!startDate) {
-      errs.startDate = 'Start Date is required.';
-    }
-    if (!endDate) {
-      errs.endDate = 'End Date is required.';
-    }
-
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      if (end < start) {
-        errs.dateRange = 'End Date cannot be earlier than Start Date.';
-      }
-    }
-
-    // Validate Month/Quarter against Bookkeeping Period
-    if (startDate && endDate && periodType === 'month' && selectedMonth) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const monthIndex = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ].indexOf(selectedMonth);
-
-      if (monthIndex !== -1 && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        const startMonth = start.getMonth();
-        const startYear = start.getFullYear();
-        const endMonth = end.getMonth();
-        const endYear = end.getFullYear();
-
-        const selYearNum = parseInt(selectedYear, 10);
-
-        const isMonthInRange =
-          (selYearNum > startYear || (selYearNum === startYear && monthIndex >= startMonth)) &&
-          (selYearNum < endYear || (selYearNum === endYear && monthIndex <= endMonth));
-
-        if (!isMonthInRange) {
-          errs.monthQuarter = `Selected month (${selectedMonth} ${selectedYear}) falls outside the bookkeeping period (${startDate} to ${endDate}). Please correct your selection.`;
-        }
-      }
-    }
-
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -180,7 +122,7 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
   const handleOpenReview = () => {
     setGeneralError(null);
     if (!validateForm()) {
-      window.scrollTo({ top: 250, behavior: 'smooth' });
+      window.scrollTo({ top: 150, behavior: 'smooth' });
       return;
     }
     setIsReviewOpen(true);
@@ -196,30 +138,25 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
       setUploadPercent((prev) => (prev < 90 ? prev + 15 : prev));
     }, 300);
 
-    const formattedPeriodDisplay = startDate && endDate
-      ? `${startDate} → ${endDate}`
-      : 'Specified Period';
-
-    const formattedMonthQuarter = periodType === 'month'
-      ? `${selectedMonth} ${selectedYear}`
-      : `${selectedQuarter} ${selectedYear}`;
-
     const fieldValuesPayload = {
       clientName: clientName.trim(),
-      bookkeepingPeriod: formattedPeriodDisplay,
-      selectionType: periodType === 'month' ? 'Month' : 'Quarter',
-      selectedPeriod: formattedMonthQuarter,
-      startDate,
-      endDate,
-      clientEmail: clientEmail.trim(),
+      bookkeepingPeriod: 'N/A',
+      selectionType: 'N/A',
+      selectedPeriod: 'N/A',
+      startDate: '',
+      endDate: '',
+      clientEmail: '',
     };
+
+    // Extract notes from other_documents category if present
+    const otherNotes = categoriesState['other_documents']?.notes || categoriesState['additional_docs']?.notes || '';
 
     try {
       const res = await submitFormDocuments(
         formConfig.id,
         fieldValuesPayload,
         categoriesState,
-        additionalNotes,
+        otherNotes,
         (percent) => {
           setUploadPercent(Math.max(percent, 20));
         }
@@ -249,20 +186,12 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
 
   const handleReset = () => {
     setClientName('');
-    setStartDate('');
-    setEndDate('');
-    setPeriodType('month');
-    setSelectedMonth('April');
-    setSelectedYear('2026');
-    setSelectedQuarter('Q1');
-    setClientEmail('');
 
     const initialCats: Record<string, CategoryState> = {};
     formConfig.categories.forEach((cat) => {
       initialCats[cat.id] = { status: 'has_documents', notes: '', files: [] };
     });
     setCategoriesState(initialCats);
-    setAdditionalNotes('');
     setSubmissionResult(null);
     setGeneralError(null);
     setErrors({});
@@ -274,20 +203,12 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
     0
   );
 
-  const formattedPeriodDisplay = startDate && endDate
-    ? `${startDate} → ${endDate}`
-    : 'Specified Period';
-
-  const formattedMonthQuarter = periodType === 'month'
-    ? `${selectedMonth} ${selectedYear}`
-    : `${selectedQuarter} ${selectedYear}`;
-
   if (submissionResult) {
     return (
       <SuccessPage
         response={submissionResult}
         clientName={clientName}
-        bookkeepingPeriod={formattedPeriodDisplay}
+        bookkeepingPeriod="Submitted Documents"
         onReset={handleReset}
         onNavigateForms={() => onNavigate('/forms')}
       />
@@ -312,15 +233,11 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Progress Indicator (Rule 31) */}
+        {/* Progress Indicator */}
         <div className="mb-8 bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
             <span className={`flex items-center space-x-1 ${clientName ? 'text-emerald-800 font-bold' : ''}`}>
-              <span>Client Information</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            </span>
-            <span className={`flex items-center space-x-1 ${startDate && endDate ? 'text-emerald-800 font-bold' : ''}`}>
-              <span>Bookkeeping Period</span>
+              <span>Client Name</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             </span>
             <span className={`flex items-center space-x-1 ${totalFilesSelected > 0 ? 'text-emerald-800 font-bold' : ''}`}>
@@ -350,103 +267,38 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
         <div className="bg-white rounded-2xl shadow-card border border-slate-200 p-6 sm:p-8 mb-8">
           <div className="border-b border-slate-100 pb-4 mb-6">
             <h2 className="text-xl font-bold font-heading text-navy-900">Client Details</h2>
-            <p className="text-xs text-slate-500">Provide your name and the bookkeeping period for this submission.</p>
+            <p className="text-xs text-slate-500">Provide your client or business name for this submission.</p>
           </div>
 
-          <div className="space-y-6">
-            {/* Client Name (Rule 12) */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
-                <span>Client Name <span className="text-red-500">*</span></span>
-                <span className="text-xs font-normal text-slate-400">Required</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. ABC Ltd or John Smith"
-                  value={clientName}
-                  onChange={(e) => {
-                    setClientName(e.target.value);
-                    if (errors.clientName) setErrors((prev) => ({ ...prev, clientName: '' }));
-                  }}
-                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 transition ${
-                    errors.clientName ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:border-navy-600 focus:ring-navy-100'
-                  }`}
-                />
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
+              <span>Client Name <span className="text-red-500">*</span></span>
+              <span className="text-xs font-normal text-slate-400">Required</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <User className="w-4 h-4" />
               </div>
-              {errors.clientName && (
-                <p className="mt-1 text-xs text-red-600 flex items-center space-x-1">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>{errors.clientName}</span>
-                </p>
-              )}
-            </div>
-
-            {/* Bookkeeping Period Date Range Picker (Rule 13) */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
-                <span>Bookkeeping Period <span className="text-red-500">*</span></span>
-                <span className="text-xs font-normal text-slate-400">Start Date & End Date</span>
-              </label>
-              <DateRangePicker
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(start, end) => {
-                  setStartDate(start);
-                  setEndDate(end);
-                  setErrors((prev) => ({ ...prev, startDate: '', endDate: '', dateRange: '', monthQuarter: '' }));
-                }}
-                errors={errors}
-              />
-            </div>
-
-            {/* Month / Quarter Selector (Rule 14) */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
-                <span>Month / Quarter <span className="text-red-500">*</span></span>
-                <span className="text-xs font-normal text-slate-400">Select Month or Quarter</span>
-              </label>
-              <MonthQuarterSelector
-                type={periodType}
-                selectedMonth={selectedMonth}
-                selectedYear={selectedYear}
-                selectedQuarter={selectedQuarter}
-                onChange={(t, m, y, q) => {
-                  setPeriodType(t);
-                  setSelectedMonth(m);
-                  setSelectedYear(y);
-                  setSelectedQuarter(q);
-                  setErrors((prev) => ({ ...prev, monthQuarter: '' }));
-                }}
-                error={errors.monthQuarter}
-              />
-            </div>
-
-            {/* Optional Client Contact Email */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
-                <span>Client Contact Email</span>
-                <span className="text-xs font-normal text-slate-400">Optional</span>
-              </label>
               <input
-                type="email"
-                placeholder="e.g. accounts@abcltd.co.uk"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-navy-100 transition"
+                type="text"
+                placeholder="e.g. ABC Ltd or John Smith"
+                value={clientName}
+                onChange={(e) => {
+                  setClientName(e.target.value);
+                  if (errors.clientName) setErrors((prev) => ({ ...prev, clientName: '' }));
+                }}
+                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 transition ${
+                  errors.clientName ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:border-navy-600 focus:ring-navy-100'
+                }`}
               />
             </div>
+            {errors.clientName && (
+              <p className="mt-1 text-xs text-red-600 flex items-center space-x-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{errors.clientName}</span>
+              </p>
+            )}
           </div>
-        </div>
-
-        {/* Introductory Text (Rule 15 - EXACT) */}
-        <div className="bg-emerald-50/90 border-l-4 border-emerald-700 p-4 rounded-r-xl mb-8 text-sm text-emerald-950 shadow-xs">
-          <p className="font-medium">
-            Please attach the applicable documents for your bookkeeping period and add any notes or explanations that may be helpful to the bookkeeper.
-          </p>
         </div>
 
         {/* Document Categories List */}
@@ -460,7 +312,7 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
                 title: cat.title,
                 uploadLabel: cat.uploadLabel,
                 description: cat.description,
-                notesLabel: cat.notesLabel || 'Notes for Bookkeeper:',
+                notesLabel: cat.notesLabel || 'Notes for Bookkeeper',
                 supportedFormats: ['PDF', 'JPG', 'JPEG', 'PNG', 'WEBP', 'XLS', 'XLSX', 'CSV', 'ZIP'],
                 allowsMultiple: true,
                 allowsNA: true,
@@ -475,29 +327,12 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
           ))}
         </div>
 
-        {/* Additional Notes for Bookkeeper (Rule 29) */}
-        <div className="bg-white rounded-2xl shadow-card border border-slate-200 p-6 mt-8">
-          <h3 className="text-base font-bold font-heading text-navy-900 mb-2">
-            Additional Notes for Bookkeeper
-          </h3>
-          <p className="text-xs text-slate-500 mb-3">
-            Add any overall notes or explanations regarding this bookkeeping period.
-          </p>
-          <textarea
-            rows={4}
-            placeholder="Add any additional notes for your bookkeeper here..."
-            value={additionalNotes}
-            onChange={(e) => setAdditionalNotes(e.target.value)}
-            className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-navy-600 focus:ring-1 focus:ring-navy-100 transition"
-          />
-        </div>
-
-        {/* Submission Section (Rule 30 - EXACT) */}
+        {/* Submission Section */}
         <div className="mt-10 bg-white border border-slate-200 shadow-elevated rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4 sticky bottom-4 z-20 backdrop-blur-md bg-white/95">
           <div>
             <h4 className="text-sm font-bold text-navy-900 font-heading">Submission</h4>
             <p className="text-xs text-slate-500">
-              Please attach the above documents where applicable and submit the completed form to Secure Books.
+              Please review your documents and notes, then submit your completed form to Secure Books.
             </p>
           </div>
 
@@ -519,12 +354,12 @@ export const FormPage: React.FC<FormPageProps> = ({ formId, onNavigate }) => {
         onConfirmSubmit={handleConfirmSubmission}
         clientInfo={{
           clientName: clientName || '',
-          bookkeepingPeriod: formattedPeriodDisplay,
-          monthQuarter: formattedMonthQuarter,
-          clientEmail: clientEmail || '',
+          bookkeepingPeriod: 'N/A',
+          monthQuarter: 'N/A',
+          clientEmail: '',
         }}
         categories={categoriesState}
-        additionalNotes={additionalNotes}
+        additionalNotes={categoriesState['other_documents']?.notes || ''}
       />
 
       {/* Live Progress Modal */}

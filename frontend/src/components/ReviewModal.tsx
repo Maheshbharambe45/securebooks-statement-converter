@@ -58,23 +58,9 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               <strong className="text-navy-900 text-sm sm:text-base [overflow-wrap:anywhere] break-words block">{clientInfo.clientName}</strong>
             </div>
             <div>
-              <span className="text-xs text-slate-400 font-semibold block uppercase">Bookkeeping Period</span>
-              <strong className="text-navy-900 text-xs sm:text-sm [overflow-wrap:anywhere] break-words block">{clientInfo.bookkeepingPeriod}</strong>
-            </div>
-            <div>
-              <span className="text-xs text-slate-400 font-semibold block uppercase">Month / Quarter</span>
-              <span className="text-slate-800 font-medium [overflow-wrap:anywhere] break-words block">{clientInfo.monthQuarter}</span>
-            </div>
-            <div>
               <span className="text-xs text-slate-400 font-semibold block uppercase">Total Attached Files</span>
               <span className="text-emerald-700 font-bold block">{totalFilesCount} Files</span>
             </div>
-            {clientInfo.clientEmail && (
-              <div className="col-span-1 sm:col-span-2 border-t border-slate-200 pt-2">
-                <span className="text-xs text-slate-400 font-semibold block uppercase">Contact Email</span>
-                <span className="text-slate-700 [overflow-wrap:anywhere] break-words block">{clientInfo.clientEmail}</span>
-              </div>
-            )}
           </div>
 
           {/* Categories Summary List */}
@@ -99,7 +85,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                       {isNA ? (
                         <span className="inline-flex items-center space-x-1 text-xs bg-slate-100 text-slate-500 font-medium px-2.5 py-1 rounded-md">
                           <Ban className="w-3 h-3 text-slate-400" />
-                          <span>Status: N/A</span>
+                          <span>Not Available</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center space-x-1 text-xs bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-1 rounded-md border border-emerald-200">
@@ -114,11 +100,17 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             </div>
           </div>
 
-          {/* Additional Notes Summary */}
-          {additionalNotes && additionalNotes.trim() && (
+          {/* Notes for Bookkeeper Summary */}
+          {((categories['other_documents']?.notes && categories['other_documents'].notes.trim()) ||
+            (categories['additional_docs']?.notes && categories['additional_docs'].notes.trim()) ||
+            (additionalNotes && additionalNotes.trim())) && (
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs">
-              <strong className="text-slate-800 block mb-1">Additional Notes for Bookkeeper:</strong>
-              <p className="text-slate-700 whitespace-pre-wrap">{additionalNotes}</p>
+              <strong className="text-slate-800 block mb-1">Notes for Bookkeeper:</strong>
+              <p className="text-slate-700 whitespace-pre-wrap">
+                {categories['other_documents']?.notes?.trim() ||
+                  categories['additional_docs']?.notes?.trim() ||
+                  additionalNotes?.trim()}
+              </p>
             </div>
           )}
         </div>

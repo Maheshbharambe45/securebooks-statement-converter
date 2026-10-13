@@ -92,7 +92,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
               className="accent-slate-700 w-3.5 h-3.5 shrink-0"
             />
             <Ban className={`w-3.5 h-3.5 shrink-0 ${isNA ? 'text-slate-700' : 'text-slate-400'}`} />
-            <span className="truncate">Not Applicable (N/A)</span>
+            <span className="truncate">Not Available</span>
           </label>
         </div>
       </div>
@@ -101,8 +101,8 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       <div className="p-4 sm:p-5 space-y-4 min-w-0 w-full max-w-full">
         {isNA && (
           <div className="bg-slate-100 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center justify-between">
-            <span>ℹ️ Upload area inactive. Category marked as Not Applicable (N/A) — Documents not available.</span>
-            <span className="font-semibold text-slate-500">N/A Active</span>
+            <span>ℹ️ Upload area inactive. Category marked as Not Available.</span>
+            <span className="font-semibold text-slate-500">Not Available</span>
           </div>
         )}
 
@@ -117,20 +117,22 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         {/* Selected File List */}
         {!isNA && <FilePreviewList files={state.files} onRemoveFile={onRemoveFile} />}
 
-        {/* Notes Field */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center space-x-1">
-            <StickyNote className="w-3.5 h-3.5 text-navy-700" />
-            <span>{category.notesLabel || 'Notes for Bookkeeper'}</span>
-          </label>
-          <textarea
-            rows={category.id === 'additional_docs' ? 4 : 2}
-            placeholder="Add any notes or explanations that may be helpful to the bookkeeper..."
-            value={state.notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-navy-600 focus:ring-1 focus:ring-navy-100 transition"
-          />
-        </div>
+        {/* Notes Field (ONLY for Other Documents) */}
+        {(category.id === 'other_documents' || category.id === 'additional_docs') && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center space-x-1">
+              <StickyNote className="w-3.5 h-3.5 text-navy-700" />
+              <span>Notes for Bookkeeper</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Add any notes or explanations for your bookkeeper here..."
+              value={state.notes}
+              onChange={(e) => onNotesChange(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-navy-600 focus:ring-1 focus:ring-navy-100 transition"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
